@@ -11,6 +11,7 @@ from sqlalchemy import select
 from bot.models import Song
 from bot.services.database import get_db_session
 from bot.services.settings import settings
+from bot.states.addsong import AddSong
 from bot.states.mainmenu import MainMenu
 
 router = Router()
@@ -50,7 +51,9 @@ async def songs_getter(dialog_manager: DialogManager, **kwargs):
 
 
 # ----- Button Handlers -----
-async def show_song(c: CallbackQuery, w: Button, m: DialogManager, item_id: str):
+async def show_song(
+    c: CallbackQuery, w: Button, m: DialogManager, item_id: str
+):
     await c.answer(f"Selected song: {item_id}")
 
 
@@ -74,44 +77,68 @@ async def add_song(c: CallbackQuery, b: Button, m: DialogManager):
 
 
 # ----- Dialog Definition -----
-router.include_router(Dialog(
-    # --- Main menu ---
-    Window(
-        Const("<b>Главное меню</b>\n\nЧто желаешь поделать сегодня?\n"),
-        Const("<b>Ты админ, кстати</b>\n", when="is_admin"),
-        Button(Const("Песни"), id="songs", on_click=lambda c, b, m: m.switch_to(MainMenu.songs)),
-        Button(Const("Ближайшие мероприятия"), id="concerts", on_click=lambda c, b, m: m.switch_to(MainMenu.events)),
-        getter=main_menu_getter,
-        state=MainMenu.menu,
-    ),
-
-    # --- Songs list with pagination ---
-    Window(
-        Const("<b>Вот список песен</b>\n"),
-        Column(
-            Select(
-                Format("{item.title}"),
-                id="song_select",
-                item_id_getter=lambda song: song.id,
-                items="songs",
-                on_click=show_song,
+router.include_router(
+    Dialog(
+        # --- Main menu ---
+        Window(
+            Const("<b>Главное меню</b>\n\nЧто желаешь поделать сегодня?\n"),
+            Const("<b>Ты админ, кстати</b>\n", when="is_admin"),
+            Button(
+                Const("Песни"),
+                id="songs",
+                on_click=lambda c, b, m: m.switch_to(MainMenu.songs),
             ),
+            Button(
+                Const("Ближайшие мероприятия"),
+                id="concerts",
+                on_click=lambda c, b, m: m.switch_to(MainMenu.events),
+            ),
+            getter=main_menu_getter,
+            state=MainMenu.menu,
         ),
-        Row(
-            Button(Const("<"), id="prev", on_click=prev_page),
-            Button(Format("{page}/{total_pages}"), id="pagecounter", on_click=lambda c, b, m: c.answer("Мисклик")),
-            Button(Const(">"), id="next", on_click=next_page),
+        # --- Songs list with pagination ---
+        Window(
+            Const("<b>Вот список песен</b>\n"),
+            Column(
+                Select(
+                    Format("{item.title}"),
+                    id="song_select",
+                    item_id_getter=lambda song: song.id,
+                    items="songs",
+                    on_click=show_song,
+                ),
+            ),
+            Row(
+                Button(Const("<"), id="prev", on_click=prev_page),
+                Button(
+                    Format("{page}/{total_pages}"),
+                    id="pagecounter",
+                    on_click=lambda c, b, m: c.answer("Мисклик"),
+                ),
+                Button(Const(">"), id="next", on_click=next_page),
+            ),
+            Button(
+                Const("Добавить песню"),
+                id="add_song",
+                on_click=lambda c, b, m: m.start(AddSong.title),
+            ),
+            Button(
+                Const("Назад"),
+                id="Back",
+                on_click=lambda c, b, m: m.switch_to(MainMenu.menu),
+            ),
+            getter=songs_getter,
+            state=MainMenu.songs,
         ),
-        Button(Const("Добавить песню"), id="add_song", on_click=add_song),
-        Button(Const("Назад"), id="Back", on_click=lambda c, b, m: m.switch_to(MainMenu.menu)),
-        getter=songs_getter,
-        state=MainMenu.songs,
-    ),
-
-    # --- Concerts placeholder ---
-    Window(
-        Const("Ближайшие концерты скоро появятся здесь"),
-        Button(Const("Назад"), id="Back", on_click=lambda c, b, m: m.switch_to(MainMenu.menu)),
-        state=MainMenu.events,
+        # --- Concerts placeholder ---
+        Window(
+            Const("Ближайшие концерты скоро появятся здесь"),
+            Button(
+                Const("Назад"),
+                id="Back",
+                on_click=lambda c, b, m: m.switch_to(MainMenu.menu),
+            ),
+            state=MainMenu.events,
+        ),
     )
-))
+)

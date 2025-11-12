@@ -12,12 +12,16 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def start_command(message: Message, dialog_manager: DialogManager) -> None:
+async def start_command(
+    message: Message, dialog_manager: DialogManager
+) -> None:
     async with get_db_session() as session:
         stmt = select(Person).where(Person.id == message.from_user.id)
         result = await session.execute(stmt)
         if not result.scalar_one_or_none():
-            person = Person(id=message.from_user.id, name=message.from_user.full_name)
+            person = Person(
+                id=message.from_user.id, name=message.from_user.full_name
+            )
             session.add(person)
             await session.commit()
 
