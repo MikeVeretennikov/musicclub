@@ -15,9 +15,9 @@ from sqlalchemy.orm import selectinload
 
 from bot.models import Song, SongParticipation, Person
 from bot.services.database import get_db_session
-from bot.services.role import is_valid_role
 from bot.services.settings import settings
 from bot.services.songparticipation import song_participation_list_out
+from bot.services.songs import prev_page, next_page
 from bot.services.url import parse_url
 from bot.states.editrole import EditRole
 from bot.states.participations import MyParticipations
@@ -55,20 +55,6 @@ async def participations_getter(
         "page": page + 1,
         "total_pages": total_pages,
     }
-
-
-async def next_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page + 1) % total_pages
-    await m.show()
-
-
-async def prev_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page - 1) % total_pages
-    await m.show()
 
 
 router.include_router(

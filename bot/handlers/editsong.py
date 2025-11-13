@@ -13,7 +13,8 @@ from sqlalchemy.orm import selectinload
 
 from bot.models import Song, SongParticipation, Person
 from bot.services.database import get_db_session
-from bot.services.role import is_valid_role
+from bot.services.songs import prev_page, next_page
+from bot.services.strings import is_valid_title
 from bot.services.settings import settings
 from bot.services.songparticipation import song_participation_list_out
 from bot.services.url import parse_url
@@ -77,24 +78,10 @@ async def join_as_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     }
 
 
-async def next_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page + 1) % total_pages
-    await m.show()
-
-
-async def prev_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page - 1) % total_pages
-    await m.show()
-
-
 async def on_role_input(
     message: Message, msg_input: MessageInput, manager: DialogManager
 ):
-    if not is_valid_role(message.text.strip()):
+    if not is_valid_title(message.text.strip()):
         await message.answer("Некорректная роль, попробуй еще раз")
         return
     manager.dialog_data["role"] = message.text.strip()

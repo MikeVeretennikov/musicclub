@@ -11,7 +11,9 @@ from sqlalchemy import select
 from bot.models import Song
 from bot.services.database import get_db_session
 from bot.services.settings import settings
+from bot.services.songs import get_paginated_songs, prev_page, next_page
 from bot.states.addsong import AddSong
+from bot.states.adminpanel import AdminPanel
 from bot.states.editsong import EditSong
 from bot.states.mainmenu import MainMenu
 from bot.states.participations import MyParticipations
@@ -29,44 +31,22 @@ async def main_menu_getter(event_from_user: User, **kwargs):
 
 async def songs_getter(dialog_manager: DialogManager, **kwargs):
     """Fetch paginated songs for current page."""
-    page = dialog_manager.dialog_data.get("page", 0)
-
-    async with get_db_session() as session:
-        result = await session.execute(select(Song).order_by(Song.id))
-        songs = result.scalars().all()
-
-    total_pages = max((len(songs) - 1) // settings.PAGE_SIZE + 1, 1)
-    page %= total_pages
-    start = page * settings.PAGE_SIZE
-    end = start + settings.PAGE_SIZE
-    dialog_manager.dialog_data["total_pages"] = total_pages
-
     return {
-        "songs": songs[start:end],
-        "page": page + 1,
-        "total_pages": total_pages,
+        **await get_paginated_songs(dialog_manager),
     }
 
+
+async def events_getter(dialog_manager: DialogManager, event_from_user: User, **kwargs):
+    ...
+    return {
+        "is_admin": event_from_user.id in settings.ADMIN_IDS,
+    }
 
 # ----- Button Handlers -----
 async def show_song(
     c: CallbackQuery, w: Button, m: DialogManager, item_id: str
 ):
     await m.start(EditSong.menu, data={"song_id": item_id})
-
-
-async def next_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page + 1) % total_pages
-    await m.show()
-
-
-async def prev_page(c: CallbackQuery, b: Button, m: DialogManager):
-    total_pages = m.dialog_data.get("total_pages", 1)
-    page = m.dialog_data.get("page", 0)
-    m.dialog_data["page"] = (page - 1) % total_pages
-    await m.show()
 
 
 # ----- Dialog Definition -----
@@ -76,6 +56,12 @@ router.include_router(
         Window(
             Const("<b>Главное меню</b>\n\nЧто желаешь поделать сегодня?\n"),
             Const("<b>Ты админ, кстати</b>\n", when="is_admin"),
+            Button(
+                Const("Админ-панель"),
+                id="admin_panel",
+                when="is_admin",
+                on_click=lambda c, b, m: m.start(AdminPanel.menu),
+            ),
             Button(
                 Const("Песни"),
                 id="songs",
@@ -88,7 +74,7 @@ router.include_router(
             ),
             Button(
                 Const("Ближайшие мероприятия"),
-                id="concerts",
+                id="events",
                 on_click=lambda c, b, m: m.switch_to(MainMenu.events),
             ),
             getter=main_menu_getter,
@@ -128,14 +114,15 @@ router.include_router(
             getter=songs_getter,
             state=MainMenu.songs,
         ),
-        # --- Concerts placeholder ---
+        # --- Events placeholder ---
         Window(
-            Const("Ближайшие концерты скоро появятся здесь"),
+            Const("Вот ближайшие мероприятия"),
             Button(
                 Const("Назад"),
-                id="Back",
+                id="back",
                 on_click=lambda c, b, m: m.switch_to(MainMenu.menu),
             ),
+            getter=events_getter,
             state=MainMenu.events,
         ),
     )

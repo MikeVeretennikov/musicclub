@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from bot.models import Song, SongParticipation, Person
 from bot.services.database import get_db_session
-from bot.services.role import is_valid_role
+from bot.services.strings import is_valid_title
 from bot.services.settings import settings
 from bot.services.url import parse_url
 from bot.states.editrole import EditRole
@@ -55,7 +55,7 @@ async def on_role_input(
 ):
     new_role = message.text
 
-    if not is_valid_role(new_role):
+    if not is_valid_title(new_role):
         return
 
     participation_id = int(dialog_manager.start_data["participation_id"])

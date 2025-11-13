@@ -7,7 +7,7 @@ from sqlalchemy import (
     Enum,
     Table,
     UniqueConstraint,
-    BigInteger,
+    BigInteger, Date,
 )
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
@@ -70,7 +70,7 @@ class Concert(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    date = Column(DateTime(timezone=True), server_default=func.now())
+    date = Column(Date(), server_default=func.now())
 
     tracklist = relationship(
         "TracklistEntry",
