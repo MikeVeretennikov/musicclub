@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel, Url
 from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm.sync import update
 from sqlalchemy.orm import selectinload
 
@@ -82,6 +82,37 @@ async def on_role_input(
 
     await dialog_manager.switch_to(EditRole.menu)
 
+async def on_remove_confirm(
+        callback: CallbackQuery, button: Button, manager: DialogManager
+):
+    participation_id = int(manager.start_data["participation_id"])
+
+    async with get_db_session() as session:
+        participation: SongParticipation = (
+            await session.execute(
+                select(SongParticipation)
+                .where(SongParticipation.id == participation_id)
+                .options(
+                    selectinload(SongParticipation.song),
+                    selectinload(SongParticipation.person),
+                )
+            )
+        ).scalar_one_or_none()
+        await callback.bot.send_message(
+            chat_id=participation.person_id,
+            text=f"{callback.from_user.mention_html()} удалил вас из песни <b>{participation.song.title}</b> с позиции <b>{participation.role}</b>",
+        )
+        await session.execute(
+            delete(SongParticipation)
+            .where(SongParticipation.id == participation_id)
+        )
+        await session.commit()
+
+    await callback.answer("Успешно удалено")
+    await manager.done()
+
+
+
 
 router.include_router(
     Dialog(
@@ -100,7 +131,7 @@ router.include_router(
             Button(
                 Const("Удалить"),
                 id="remove_role",
-                on_click=lambda c, b, m: c.answer("TODO"),
+                on_click=lambda c, b, m: m.switch_to(EditRole.remove_confirm),
             ),
             Cancel(Const("Назад")),
             getter=main_getter,
@@ -115,6 +146,16 @@ router.include_router(
                 on_click=lambda c, b, m: m.switch_to(EditRole.menu),
             ),
             state=EditRole.input_role,
+        ),
+        Window(
+            Const("Точно хочешь удалить?"),
+            Button(Const("Да, уверен"), id="confirm_remove", on_click=on_remove_confirm),
+            Button(
+                Const("Назад"),
+                id="back",
+                on_click=lambda c, b, m: m.switch_to(EditRole.menu),
+            ),
+            state=EditRole.remove_confirm,
         ),
     )
 )
