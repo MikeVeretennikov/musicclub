@@ -51,10 +51,16 @@ async def add_song(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     async with get_db_session() as session:
-        session.add(Song(title=dialog_manager.dialog_data["title"], link=dialog_manager.dialog_data["link"]))
+        session.add(
+            Song(
+                title=dialog_manager.dialog_data["title"],
+                link=dialog_manager.dialog_data["link"],
+            )
+        )
         await session.commit()
     await callback.answer("Песня успешно создана")
     await dialog_manager.done()
+
 
 router.include_router(
     Dialog(

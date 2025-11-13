@@ -29,19 +29,15 @@ async def main_menu_getter(event_from_user: User, **kwargs):
 async def songs_getter(dialog_manager: DialogManager, **kwargs):
     """Fetch paginated songs for current page."""
     page = dialog_manager.dialog_data.get("page", 0)
-    page_size = 4
 
     async with get_db_session() as session:
         result = await session.execute(select(Song).order_by(Song.id))
         songs = result.scalars().all()
 
-    total_pages = max((len(songs) - 1) // page_size + 1, 1)
-
+    total_pages = max((len(songs) - 1) // settings.PAGE_SIZE + 1, 1)
     page %= total_pages
-
-    start = page * page_size
-    end = start + page_size
-
+    start = page * settings.PAGE_SIZE
+    end = start + settings.PAGE_SIZE
     dialog_manager.dialog_data["total_pages"] = total_pages
 
     return {
@@ -62,7 +58,6 @@ async def next_page(c: CallbackQuery, b: Button, m: DialogManager):
     total_pages = m.dialog_data.get("total_pages", 1)
     page = m.dialog_data.get("page", 0)
     m.dialog_data["page"] = (page + 1) % total_pages
-    logging.debug("total_pages %d", total_pages)
     await m.show()
 
 
