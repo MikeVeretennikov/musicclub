@@ -28,11 +28,13 @@ async def get_paginated_songs(dialog_manager: DialogManager) -> dict:
         "total_pages": total_pages,
     }
 
+
 async def next_page(c: CallbackQuery, b: Button, m: DialogManager):
     total_pages = m.dialog_data.get("total_pages", 1)
     page = m.dialog_data.get("page", 0)
     m.dialog_data["page"] = (page + 1) % total_pages
     await m.show()
+
 
 async def prev_page(c: CallbackQuery, b: Button, m: DialogManager):
     total_pages = m.dialog_data.get("total_pages", 1)
@@ -40,3 +42,15 @@ async def prev_page(c: CallbackQuery, b: Button, m: DialogManager):
     m.dialog_data["page"] = (page - 1) % total_pages
     await m.show()
 
+
+async def get_verbose_tracklist(dialog_manager: DialogManager) -> dict:
+    verbose_tracklist = []
+    async with get_db_session() as session:
+        for n, track_id in enumerate(dialog_manager.dialog_data["tracklist"]):
+            song: Song = (
+                await session.execute(select(Song).where(Song.id == track_id))
+            ).scalar_one_or_none()
+            verbose_tracklist.append(f"{n + 1}: {song.title}")
+    return {
+        "verbose_tracklist": "\n".join(verbose_tracklist),
+    }

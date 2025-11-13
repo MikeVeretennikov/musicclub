@@ -7,7 +7,8 @@ from sqlalchemy import (
     Enum,
     Table,
     UniqueConstraint,
-    BigInteger, Date,
+    BigInteger,
+    Date,
 )
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func

@@ -25,15 +25,19 @@ from bot.states.participations import MyParticipations
 
 router = Router()
 
-router.include_router(Dialog(
-    Window(
-        Const("Админ панель"),
-        Button(
-            Const("Создать мероприятие"),
-            id="create",
-            on_click=lambda c, b, m: m.start(CreateEvent.title, data={"started_id": c.from_user.id}),
-        ),
-        Cancel(Const("Назад")),
-        state=AdminPanel.menu
+router.include_router(
+    Dialog(
+        Window(
+            Const("Админ панель"),
+            Button(
+                Const("Создать мероприятие"),
+                id="create",
+                on_click=lambda c, b, m: m.start(
+                    CreateEvent.title, data={"started_id": c.from_user.id}
+                ),
+            ),
+            Cancel(Const("Назад")),
+            state=AdminPanel.menu,
+        )
     )
-))
+)

@@ -1,4 +1,5 @@
 import logging
+from datetime import date, datetime
 
 from aiogram import Router
 from aiogram.types import User, CallbackQuery
@@ -8,12 +9,13 @@ from aiogram_dialog.widgets.kbd import Button, Row, Column
 from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
 from sqlalchemy import select
 
-from bot.models import Song
+from bot.models import Song, Concert
 from bot.services.database import get_db_session
 from bot.services.settings import settings
 from bot.services.songs import get_paginated_songs, prev_page, next_page
 from bot.states.addsong import AddSong
 from bot.states.adminpanel import AdminPanel
+from bot.states.concert import ConcertInfo
 from bot.states.editsong import EditSong
 from bot.states.mainmenu import MainMenu
 from bot.states.participations import MyParticipations
@@ -36,17 +38,36 @@ async def songs_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-async def events_getter(dialog_manager: DialogManager, event_from_user: User, **kwargs):
-    ...
+async def events_getter(
+    dialog_manager: DialogManager, event_from_user: User, **kwargs
+):
+    page = dialog_manager.dialog_data.get("page", 0)
+
+    async with get_db_session() as session:
+        concerts: list[Concert] = (
+            (
+                await session.execute(
+                    select(Concert)
+                    .where(Concert.date >= datetime.now().date())
+                    .order_by(Concert.id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    total_pages = max((len(concerts) - 1) // settings.PAGE_SIZE + 1, 1)
+    page %= total_pages
+    start = page * settings.PAGE_SIZE
+    end = start + settings.PAGE_SIZE
+    dialog_manager.dialog_data["total_pages"] = total_pages
+
     return {
+        "events": concerts[start:end],
+        "page": page + 1,
+        "total_pages": total_pages,
         "is_admin": event_from_user.id in settings.ADMIN_IDS,
     }
-
-# ----- Button Handlers -----
-async def show_song(
-    c: CallbackQuery, w: Button, m: DialogManager, item_id: str
-):
-    await m.start(EditSong.menu, data={"song_id": item_id})
 
 
 # ----- Dialog Definition -----
@@ -89,7 +110,9 @@ router.include_router(
                     id="song_select",
                     item_id_getter=lambda song: song.id,
                     items="songs",
-                    on_click=show_song,
+                    on_click=lambda c, b, m, item_id: m.start(
+                        EditSong.menu, data={"song_id": item_id}
+                    ),
                 ),
             ),
             Row(
@@ -117,6 +140,26 @@ router.include_router(
         # --- Events placeholder ---
         Window(
             Const("Вот ближайшие мероприятия"),
+            Column(
+                Select(
+                    Format("{item.name}"),
+                    id="event_select",
+                    item_id_getter=lambda event: event.id,
+                    items="events",
+                    on_click=lambda c, b, m, i: m.start(
+                        ConcertInfo.menu, data={"concert_id": i}
+                    ),
+                ),
+            ),
+            Row(
+                Button(Const("<"), id="prev", on_click=prev_page),
+                Button(
+                    Format("{page}/{total_pages}"),
+                    id="pagecounter",
+                    on_click=lambda c, b, m: c.answer("Мисклик"),
+                ),
+                Button(Const(">"), id="next", on_click=next_page),
+            ),
             Button(
                 Const("Назад"),
                 id="back",
