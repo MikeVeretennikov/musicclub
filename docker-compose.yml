@@ -26,8 +26,17 @@
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: unless-stopped
 
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
 volumes:
   postgres_data:
   redis_data:
-  campaign_icons:
-  chardata:
