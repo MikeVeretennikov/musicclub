@@ -77,6 +77,7 @@ class Concert(Base):
         "TracklistEntry",
         back_populates="concert",
         order_by="TracklistEntry.position",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):
@@ -87,7 +88,11 @@ class TracklistEntry(Base):
     __tablename__ = "tracklist_entries"
 
     id = Column(Integer, primary_key=True)
-    concert_id = Column(Integer, ForeignKey("concerts.id"), nullable=False)
+    concert_id = Column(
+        Integer,
+        ForeignKey("concerts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     song_id = Column(Integer, ForeignKey("songs.id"), nullable=False)
     position = Column(Integer, nullable=False)
 
