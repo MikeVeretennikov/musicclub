@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     BOT_TOKEN: str
     ADMIN_IDS: Set[int]
-    CHAT_LINK: str
+    CHAT_ID: int
     PAGE_SIZE: int = 4
 
     REDIS_HOST: str

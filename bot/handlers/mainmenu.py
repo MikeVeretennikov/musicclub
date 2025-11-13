@@ -23,11 +23,9 @@ from bot.states.participations import MyParticipations
 router = Router()
 
 
-# ----- Getters -----
 async def main_menu_getter(event_from_user: User, **kwargs):
     return {
         "is_admin": event_from_user.id in settings.ADMIN_IDS,
-        "chat_link": settings.CHAT_LINK,
     }
 
 
@@ -70,10 +68,8 @@ async def events_getter(
     }
 
 
-# ----- Dialog Definition -----
 router.include_router(
     Dialog(
-        # --- Main menu ---
         Window(
             Const("<b>Главное меню</b>\n\nЧто желаешь поделать сегодня?\n"),
             Const("<b>Ты админ, кстати</b>\n", when="is_admin"),
@@ -101,7 +97,6 @@ router.include_router(
             getter=main_menu_getter,
             state=MainMenu.menu,
         ),
-        # --- Songs list with pagination ---
         Window(
             Const("<b>Вот список песен</b>\n"),
             Column(
@@ -137,7 +132,6 @@ router.include_router(
             getter=songs_getter,
             state=MainMenu.songs,
         ),
-        # --- Events placeholder ---
         Window(
             Const("Вот ближайшие мероприятия"),
             Column(
