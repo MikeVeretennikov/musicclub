@@ -16,6 +16,7 @@ router = Router()
 async def start_command(
     message: Message, dialog_manager: DialogManager, command: CommandObject
 ) -> None:
+    await dialog_manager.reset_stack()
     async with get_db_session() as session:
         stmt = select(Person).where(Person.id == message.from_user.id)
         result = await session.execute(stmt)
@@ -25,8 +26,8 @@ async def start_command(
             )
             session.add(person)
             await session.commit()
+            await message.answer(f"Welcome, to the club, buddy!")
 
-    await message.answer(f"Welcome, to the club, buddy!")
     if command.args:
         await dialog_manager.start(EditSong.menu, data={"song_id": int(command.args)})
         return
