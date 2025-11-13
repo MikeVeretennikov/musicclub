@@ -20,7 +20,9 @@ async def song_participation_list_out(
 
     return [
         SongParticipationOut(
-            id=part.song_id,
+            participation_id=part.id,
+            person_id=part.person_id,
+            song_id=part.song_id,
             who=persons[part.person_id].name,
             role=part.role,
         )

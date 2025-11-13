@@ -16,6 +16,7 @@ from bot.services.role import is_valid_role
 from bot.services.settings import settings
 from bot.services.songparticipation import song_participation_list_out
 from bot.services.url import parse_url
+from bot.states.editrole import EditRole
 from bot.states.editsong import EditSong
 
 router = Router()
@@ -43,7 +44,8 @@ async def roles_info_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     async with get_db_session() as session:
         result = await session.execute(
             select(SongParticipation).where(
-                SongParticipation.song_id == int(dialog_manager.start_data["song_id"])
+                SongParticipation.song_id
+                == int(dialog_manager.start_data["song_id"])
             )
         )
         participations: list[SongParticipation] = result.scalars().all()
@@ -98,28 +100,36 @@ async def on_join(
     callback: CallbackQuery, button: Button, manager: DialogManager
 ):
     async with get_db_session() as session:
-        result = (await session.execute(
-            select(SongParticipation)
-            .where(
-                SongParticipation.role == manager.dialog_data["role"],
-                SongParticipation.song_id == int(manager.start_data["song_id"]),
-                SongParticipation.person_id == callback.from_user.id,
+        result = (
+            await session.execute(
+                select(SongParticipation)
+                .where(
+                    SongParticipation.role == manager.dialog_data["role"],
+                    SongParticipation.song_id
+                    == int(manager.start_data["song_id"]),
+                    SongParticipation.person_id == callback.from_user.id,
+                )
+                .limit(1)
             )
-            .limit(1)
-        )).scalar_one_or_none()
+        ).scalar_one_or_none()
         if result:
-            await callback.answer("Вы уже участвуете в этой песне под этой ролью")
+            await callback.answer(
+                "Вы уже участвуете в этой песне под этой ролью"
+            )
             await manager.switch_to(EditSong.roles)
             return
 
-        session.add(SongParticipation(
-            person_id=callback.from_user.id,
-            song_id=int(manager.start_data["song_id"]),
-            role=manager.dialog_data["role"],
-        ))
+        session.add(
+            SongParticipation(
+                person_id=callback.from_user.id,
+                song_id=int(manager.start_data["song_id"]),
+                role=manager.dialog_data["role"],
+            )
+        )
         await session.commit()
         await callback.answer("Ваше участие было записано")
         await manager.switch_to(EditSong.roles)
+
 
 router.include_router(
     Dialog(
@@ -141,9 +151,11 @@ router.include_router(
                 Select(
                     Format("{item.who} - {item.role}"),
                     id="participation_select",
-                    item_id_getter=lambda song: song.id,
+                    item_id_getter=lambda participation: f"{participation.participation_id}",
                     items="participations",
-                    on_click=lambda c, b, m, i: c.answer(f"TODO: song_id: {i}"),
+                    on_click=lambda c, b, m, i: m.start(
+                        EditRole.menu, data={"participation_id": i}
+                    ),
                 ),
             ),
             Row(
