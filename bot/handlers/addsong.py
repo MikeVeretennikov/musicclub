@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel
 from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
 from sqlalchemy import select
 
-from bot.models import Song
+from bot.models import Song, PendingRole
 from bot.services.database import get_db_session
 from bot.services.settings import settings
 from bot.services.strings import is_valid_title
@@ -89,6 +89,13 @@ async def add_song(
         )
         session.add(song)
         await session.commit()
+        
+        # Create PendingRole entries for each role
+        for role in dialog_manager.dialog_data.get("roles", []):
+            pending_role = PendingRole(song_id=song.id, role=role)
+            session.add(pending_role)
+        await session.commit()
+        
     await callback.answer("Песня успешно создана")
 
     await callback.bot.send_message(
