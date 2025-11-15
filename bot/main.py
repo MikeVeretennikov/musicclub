@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import Iterable
 
 import redis.asyncio as redis
-from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -64,9 +63,6 @@ async def on_shutdown(bot: Bot) -> None:
 
 
 async def run_bot() -> None:
-    if not settings.WEBHOOK_URL:
-        raise RuntimeError("WEBHOOK_URL is not configured in settings; webhook mode requires WEBHOOK_URL")
-
     storage = RedisStorage(
         redis=redis.Redis(
             host=settings.REDIS_HOST,
@@ -90,44 +86,11 @@ async def run_bot() -> None:
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    # aiohttp app that forwards incoming Telegram updates to the dispatcher
-    async def handle_update(request: web.Request) -> web.Response:
-        try:
-            update = await request.json()
-        except Exception:
-            return web.Response(status=400, text="invalid json")
-
-        # feed the update into dispatcher webhook pipeline
-        await dp.feed_webhook_update(bot, update)
-        # Always return 200 to Telegram quickly; dispatcher will process handlers.
-        return web.Response(text="OK")
-
-    app = web.Application()
-    app.router.add_post(settings.WEBHOOK_PATH, handle_update)
-
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, settings.WEBHOOK_HOST, settings.WEBHOOK_PORT)
-
-    await bot.set_webhook(settings.WEBHOOK_URL)
-
-    await dp.emit_startup(bot=bot)
-
-    await site.start()
-    logger.info("Webhook server started at %s:%s%s", settings.WEBHOOK_HOST, settings.WEBHOOK_PORT, settings.WEBHOOK_PATH)
-
     try:
-        while True:
-            await asyncio.sleep(3600)
+        await dp.start_polling(bot)
     finally:
-        logger.info("Shutting down webhook server")
-        await dp.emit_shutdown(bot=bot)
-        try:
-            await bot.delete_webhook(drop_pending_updates=True)
-        finally:
-            await runner.cleanup()
-            await dp.storage.close()
-            await bot.session.close()
+        await dp.storage.close()
+        await bot.session.close()
 
 
 async def main() -> None:

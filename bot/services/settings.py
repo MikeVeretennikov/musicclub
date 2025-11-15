@@ -19,10 +19,6 @@ class Settings(BaseSettings):
     REDIS_DB: int
 
     POSTGRES_URL: str
-    WEBHOOK_URL: str | None = None
-    WEBHOOK_PATH: str = "/"
-    WEBHOOK_HOST: str = "0.0.0.0"
-    WEBHOOK_PORT: int = 8443
 
 
 settings = Settings()
