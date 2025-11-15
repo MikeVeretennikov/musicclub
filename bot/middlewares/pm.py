@@ -12,10 +12,12 @@ class PrivateChatOnlyMiddleware(BaseMiddleware):
     ) -> Any:
         chat = event.chat if isinstance(event, Message) else event.message.chat
         if chat.type != "private":
-            try:
-                await event.reply(f"Бот работает только в приватных сообщениях.\n\nНапиши мне: @{(await event.bot.get_me()).username}")
-            except:
-                pass
+            me = await event.bot.get_me()
+            if me.username in event.message.text:
+                try:
+                    await event.reply(f"Бот работает только в приватных сообщениях.\n\nНапиши мне: @{me.username}")
+                except:
+                    pass
             return None
 
         return await handler(event, data)
