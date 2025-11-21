@@ -18,4 +18,6 @@ class ChatInviteLinkManager:
         )
 
     async def shutdown(self):
-        await self.bot.revoke_chat_invite_link(chat_id=self.chat_id, invite_link=self.link.invite_link)
+        await self.bot.revoke_chat_invite_link(
+            chat_id=self.chat_id, invite_link=self.link.invite_link
+        )

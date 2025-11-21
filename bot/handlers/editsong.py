@@ -37,6 +37,7 @@ async def song_info_getter(dialog_manager: DialogManager, **kwargs) -> dict:
         "is_admin": dialog_manager.event.from_user.id in settings.ADMIN_IDS,
         "song_id": dialog_manager.start_data["song_id"],
         "song_title": song.title,
+        "song_description": song.description,
         "song_link": song.link,
     }
 
@@ -130,6 +131,7 @@ router.include_router(
             Format(
                 'ID: {song_id}\nНазвание: <a href="{song_link}">{song_title}</a>'
             ),
+            Format("Описание: {song_description}", when="song_description"),
             Url(Const("Ссылка"), url=Format("{song_link}"), id="song_link"),
             Button(
                 Const("Роли и присоединиться"),

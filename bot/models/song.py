@@ -9,6 +9,7 @@ class Song(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(200), nullable=False)
+    description = Column(String(500), nullable=True)
     link = Column(String(200), nullable=True)
 
     participations = relationship("SongParticipation", back_populates="song")

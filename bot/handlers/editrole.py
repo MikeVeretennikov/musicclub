@@ -43,6 +43,7 @@ async def main_getter(dialog_manager: DialogManager, **kwargs) -> dict:
         "person_id": participation.person.id,
         "person_name": participation.person.name,
         "song_title": participation.song.title,
+        "song_description": participation.song.description,
         "role": participation.role,
     }
 

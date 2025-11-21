@@ -101,17 +101,27 @@ async def vacant_positions_getter(
         "total_pages": total_pages,
     }
 
+
 async def on_pending_role_selected(
-        callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str
+    callback: CallbackQuery,
+    button: Button,
+    manager: DialogManager,
+    item_id: str,
 ):
     async with get_db_session() as session:
-        pending_role: PendingRole = (await session.execute(select(PendingRole).where(PendingRole.id == int(item_id)))).scalar_one_or_none()
+        pending_role: PendingRole = (
+            await session.execute(
+                select(PendingRole).where(PendingRole.id == int(item_id))
+            )
+        ).scalar_one_or_none()
         await session.delete(pending_role)
-        session.add(SongParticipation(
-            person_id=callback.from_user.id,
-            song_id=pending_role.song_id,
-            role=pending_role.role,
-        ))
+        session.add(
+            SongParticipation(
+                person_id=callback.from_user.id,
+                song_id=pending_role.song_id,
+                role=pending_role.role,
+            )
+        )
         await session.commit()
         await callback.answer("Ваше участие было записано")
     await manager.switch_to(MainMenu.menu)
@@ -142,7 +152,9 @@ router.include_router(
             Button(
                 Const("Открытые позиции"),
                 id="positions",
-                on_click=lambda c, b, m: m.switch_to(MainMenu.vacant_positions),
+                on_click=lambda c, b, m: m.switch_to(
+                    MainMenu.vacant_positions
+                ),
             ),
             Button(
                 Const("Ближайшие мероприятия"),
@@ -207,7 +219,11 @@ router.include_router(
                 ),
                 Button(Const(">"), id="next", on_click=next_page),
             ),
-            Button(Const("Назад"), id="back", on_click=lambda c, b, m: m.switch_to(MainMenu.menu)),
+            Button(
+                Const("Назад"),
+                id="back",
+                on_click=lambda c, b, m: m.switch_to(MainMenu.menu),
+            ),
             getter=vacant_positions_getter,
             state=MainMenu.vacant_positions,
         ),

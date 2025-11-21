@@ -49,10 +49,9 @@ async def start_command_not_member(
     await dialog_manager.reset_stack()
     await dialog_manager.start(ChatInviteStates.invite)
 
+
 async def not_member_dialog_getter(dialog_manager: DialogManager, **kwargs):
-    return {
-        "invite_link": ChatInviteLinkManager.link.invite_link
-    }
+    return {"invite_link": ChatInviteLinkManager.link.invite_link}
 
 
 class ChatInviteStates(StatesGroup):

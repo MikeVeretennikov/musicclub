@@ -25,7 +25,29 @@ async def on_title_input(
     message_input: MessageInput,
     dialog_manager: DialogManager,
 ):
+    if not is_valid_title(message.text):
+        return
     dialog_manager.dialog_data["title"] = message.text
+    await dialog_manager.next()
+
+
+async def on_description_input(
+    message: Message,
+    message_input: MessageInput,
+    dialog_manager: DialogManager,
+):
+    if not is_valid_title(message.text):
+        return
+    dialog_manager.dialog_data["description"] = message.text
+    await dialog_manager.next()
+
+
+async def on_description_skip(
+    callback: CallbackQuery,
+    button: Button,
+    dialog_manager: DialogManager,
+):
+    dialog_manager.dialog_data["description"] = None
     await dialog_manager.next()
 
 
@@ -89,13 +111,13 @@ async def add_song(
         )
         session.add(song)
         await session.commit()
-        
+
         # Create PendingRole entries for each role
         for role in dialog_manager.dialog_data.get("roles", []):
             pending_role = PendingRole(song_id=song.id, role=role)
             session.add(pending_role)
         await session.commit()
-        
+
     await callback.answer("Песня успешно создана")
 
     await callback.bot.send_message(
@@ -119,6 +141,19 @@ router.include_router(
             Cancel(Const("Отмена")),
             MessageInput(content_types=ContentType.TEXT, func=on_title_input),
             state=AddSong.title,
+        ),
+        Window(
+            Const("Есть ли какие-то комментарии к песне?"),
+            Button(
+                Const("Пропустить"),
+                id="skip_description",
+                on_click=on_description_skip,
+            ),
+            Cancel(Const("Отмена")),
+            MessageInput(
+                content_types=ContentType.TEXT, func=on_description_input
+            ),
+            state=AddSong.description,
         ),
         Window(
             Const("Дай ссылку на песню"),
