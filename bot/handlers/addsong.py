@@ -109,6 +109,8 @@ async def add_song(
             title=dialog_manager.dialog_data["title"],
             link=dialog_manager.dialog_data["link"],
         )
+        if dialog_manager.dialog_data["description"]:
+            song.description = dialog_manager.dialog_data["description"]
         session.add(song)
         await session.commit()
 
