@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.state import StatesGroup, State
@@ -16,9 +18,13 @@ from bot.states.editsong import EditSong
 from bot.states.mainmenu import MainMenu
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
-@router.message(CommandStart(), ChatMemberFilter(chat_id=settings.CHAT_ID))
+@router.message(
+    CommandStart(deep_link=True, deep_link_encoded=True),
+    ChatMemberFilter(chat_id=settings.CHAT_ID),
+)
 async def start_command(
     message: Message, dialog_manager: DialogManager, command: CommandObject
 ) -> None:
@@ -32,13 +38,23 @@ async def start_command(
             )
             session.add(person)
             await session.commit()
-            await message.answer(f"Welcome, to the club, buddy!")
+            await message.answer("Welcome, to the club, buddy!")
 
     if command.args:
+        logger.info(
+            "User %d used command /start with arguments %d",
+            message.from_user.id,
+            int(command.args),
+        )
         await dialog_manager.start(
             EditSong.menu, data={"song_id": int(command.args)}
         )
         return
+    logger.info(
+        "User %d used command /start without arguments",
+        message.from_user.id,
+    )
+
     await dialog_manager.start(MainMenu.menu)
 
 
@@ -47,6 +63,10 @@ async def start_command_not_member(
     message: Message, dialog_manager: DialogManager
 ) -> None:
     await dialog_manager.reset_stack()
+    logger.info(
+        "User %d used command /start without being in chat",
+        message.from_user.id,
+    )
     await dialog_manager.start(ChatInviteStates.invite)
 
 
