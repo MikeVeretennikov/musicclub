@@ -15,5 +15,5 @@ class Song(Base):
     participations = relationship("SongParticipation", back_populates="song")
     tracklist_entries = relationship("TracklistEntry", back_populates="song")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Song(title={self.title})>"

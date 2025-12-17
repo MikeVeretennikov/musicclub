@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from bot.models import Base
@@ -19,11 +19,7 @@ class TracklistEntry(Base):
     concert = relationship("Concert", back_populates="tracklist")
     song = relationship("Song", back_populates="tracklist_entries")
 
-    __table_args__ = (
-        UniqueConstraint(
-            "concert_id", "position", name="unique_song_position_per_concert"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("concert_id", "position", name="unique_song_position_per_concert"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TracklistEntry(concert={self.concert.name}, position={self.position}, song={self.song.title})>"

@@ -1,40 +1,30 @@
-import logging
-from datetime import date, datetime
+from datetime import date
 
 from aiogram import Router
 from aiogram.enums import ContentType
-from aiogram.types import User, CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager, ShowMode
+from aiogram.types import CallbackQuery, Message
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.kbd import (
     Button,
-    Row,
-    Column,
-    Cancel,
-    Url,
     Calendar,
+    Cancel,
+    Column,
+    Row,
+    Select,
 )
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from sqlalchemy import select, delete
-from sqlalchemy.orm.sync import update
-from sqlalchemy.orm import selectinload
+from aiogram_dialog.widgets.text import Const, Format
 
-
-from bot.models import Song, SongParticipation, Person, Concert, TracklistEntry
+from bot.models import Concert, TracklistEntry
 from bot.services.database import get_db_session
 from bot.services.songs import (
     get_paginated_songs,
-    prev_page,
-    next_page,
     get_verbose_tracklist,
+    next_page,
+    prev_page,
 )
 from bot.services.strings import is_valid_title
-from bot.services.settings import settings
-from bot.services.songparticipation import song_participation_list_out
-from bot.services.url import parse_url
 from bot.states.createevent import CreateEvent
-from bot.states.participations import MyParticipations
 
 router = Router()
 
@@ -57,9 +47,7 @@ async def confirm_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-async def on_title_input(
-    message: Message, message_input: MessageInput, manager: DialogManager
-):
+async def on_title_input(message: Message, message_input: MessageInput, manager: DialogManager):
     if message.from_user.id != manager.start_data["started_id"]:
         return
     if not is_valid_title(message.text):
@@ -68,23 +56,19 @@ async def on_title_input(
     await manager.switch_to(CreateEvent.tracklist_enable)
 
 
-async def on_tracklist_enable(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_tracklist_enable(callback: CallbackQuery, button: Button, manager: DialogManager):
     manager.dialog_data["tracklist_enabled"] = True
     await manager.switch_to(CreateEvent.add_song_to_tracklist)
 
 
-async def on_tracklist_disable(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_tracklist_disable(callback: CallbackQuery, button: Button, manager: DialogManager):
     manager.dialog_data["tracklist_enabled"] = False
     await manager.switch_to(CreateEvent.date)
 
 
 async def on_date_input(
     callback: CallbackQuery,
-    widget,
+    widget: MessageInput,
     manager: DialogManager,
     selected_date: date,
 ):
@@ -105,16 +89,12 @@ async def on_song_picked(
     await manager.show()
 
 
-async def on_confirm_tracklist(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_confirm_tracklist(callback: CallbackQuery, button: Button, manager: DialogManager):
     await callback.answer("Окей, финализировал список")
     await manager.switch_to(CreateEvent.date)
 
 
-async def on_confirm_event(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_confirm_event(callback: CallbackQuery, button: Button, manager: DialogManager):
     async with get_db_session() as session:
         concert = Concert(
             name=manager.dialog_data["title"],
@@ -147,9 +127,7 @@ router.include_router(
         ),
         Window(
             Const("Будет ли у события треклист?"),
-            Button(
-                Const("Будет"), id="tracklist_on", on_click=on_tracklist_enable
-            ),
+            Button(Const("Будет"), id="tracklist_on", on_click=on_tracklist_enable),
             Button(
                 Const("Не будет"),
                 id="tracklist_off",

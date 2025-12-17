@@ -1,9 +1,9 @@
 import asyncio
 import importlib
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import Iterable
 
 import redis.asyncio as redis
 from aiogram import Bot, Dispatcher
@@ -15,8 +15,9 @@ from aiogram_dialog import setup_dialogs
 
 from bot.middlewares.pm import PrivateChatOnlyMiddleware
 from bot.models import Base
-from bot.services.database import init_db, close_db, get_db_session, engine
+from bot.services.database import close_db, engine, init_db
 from bot.services.invite_link import ChatInviteLinkManager
+
 from .services.settings import settings
 
 logger = logging.getLogger(__name__)

@@ -2,22 +2,27 @@ import logging
 
 from aiogram import Router
 from aiogram.enums import ContentType
-from aiogram.types import User, CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram.types import CallbackQuery, Message
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    Cancel,
+    Column,
+    Row,
+    Select,
+    Url,
+)
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel, Url
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from bot.models import Song, SongParticipation, Person
+from bot.models import Song, SongParticipation
 from bot.services.database import get_db_session
-from bot.services.songs import prev_page, next_page
-from bot.services.strings import is_valid_title
 from bot.services.settings import settings
 from bot.services.songparticipation import song_participation_list_out
-from bot.services.url import parse_url
+from bot.services.songs import next_page, prev_page
+from bot.services.strings import is_valid_title
 from bot.states.editrole import EditRole
 from bot.states.editsong import EditSong
 
@@ -28,9 +33,7 @@ logger = logging.getLogger(__name__)
 async def song_info_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     async with get_db_session() as session:
         result = await session.execute(
-            select(Song)
-            .where(Song.id == int(dialog_manager.start_data["song_id"]))
-            .limit(1)
+            select(Song).where(Song.id == int(dialog_manager.start_data["song_id"])).limit(1)
         )
         song = result.scalar_one_or_none()
     return {
@@ -48,10 +51,7 @@ async def roles_info_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     async with get_db_session() as session:
         result = await session.execute(
             select(SongParticipation)
-            .where(
-                SongParticipation.song_id
-                == int(dialog_manager.start_data["song_id"])
-            )
+            .where(SongParticipation.song_id == int(dialog_manager.start_data["song_id"]))
             .options(
                 selectinload(SongParticipation.song),
             )
@@ -66,9 +66,7 @@ async def roles_info_getter(dialog_manager: DialogManager, **kwargs) -> dict:
 
     return {
         **await song_info_getter(dialog_manager),
-        "participations": await song_participation_list_out(
-            participations[start:end]
-        ),
+        "participations": await song_participation_list_out(participations[start:end]),
         "page": page + 1,
         "total_pages": total_pages,
     }
@@ -80,9 +78,7 @@ async def join_as_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     }
 
 
-async def on_role_input(
-    message: Message, msg_input: MessageInput, manager: DialogManager
-):
+async def on_role_input(message: Message, msg_input: MessageInput, manager: DialogManager):
     if not is_valid_title(message.text.strip()):
         await message.answer("Некорректная роль, попробуй еще раз")
         return
@@ -90,26 +86,21 @@ async def on_role_input(
     await manager.switch_to(EditSong.confirm_join)
 
 
-async def on_join(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_join(callback: CallbackQuery, button: Button, manager: DialogManager):
     async with get_db_session() as session:
         result = (
             await session.execute(
                 select(SongParticipation)
                 .where(
                     SongParticipation.role == manager.dialog_data["role"],
-                    SongParticipation.song_id
-                    == int(manager.start_data["song_id"]),
+                    SongParticipation.song_id == int(manager.start_data["song_id"]),
                     SongParticipation.person_id == callback.from_user.id,
                 )
                 .limit(1)
             )
         ).scalar_one_or_none()
         if result:
-            await callback.answer(
-                "Вы уже участвуете в этой песне под этой ролью"
-            )
+            await callback.answer("Вы уже участвуете в этой песне под этой ролью")
             await manager.switch_to(EditSong.roles)
             return
 
@@ -128,9 +119,7 @@ async def on_join(
 router.include_router(
     Dialog(
         Window(
-            Format(
-                'ID: {song_id}\nНазвание: <a href="{song_link}">{song_title}</a>'
-            ),
+            Format('ID: {song_id}\nНазвание: <a href="{song_link}">{song_title}</a>'),
             Format("Описание: {song_description}", when="song_description"),
             Url(Const("Ссылка"), url=Format("{song_link}"), id="song_link"),
             Button(
@@ -143,9 +132,7 @@ router.include_router(
             state=EditSong.menu,
         ),
         Window(
-            Format(
-                'ID: {song_id}\nНазвание: <a href="{song_link}">{song_title}</a>'
-            ),
+            Format('ID: {song_id}\nНазвание: <a href="{song_link}">{song_title}</a>'),
             Column(
                 Select(
                     Format("{item.who} - {item.role}"),

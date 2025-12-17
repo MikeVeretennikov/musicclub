@@ -1,19 +1,17 @@
-import logging
-from datetime import date, datetime
+from datetime import datetime
 
 from aiogram import Router
-from aiogram.types import User, CallbackQuery
-from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram.types import CallbackQuery, User
+from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog.widgets.kbd import Button, Column, Row, Select
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, Row, Column
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from bot.models import Song, Concert, PendingRole, SongParticipation, Person
+from bot.models import Concert, PendingRole, SongParticipation
 from bot.services.database import get_db_session
 from bot.services.settings import settings
-from bot.services.songs import get_paginated_songs, prev_page, next_page
+from bot.services.songs import get_paginated_songs, next_page, prev_page
 from bot.states.addsong import AddSong
 from bot.states.adminpanel import AdminPanel
 from bot.states.concert import ConcertInfo
@@ -37,20 +35,12 @@ async def songs_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-async def events_getter(
-    dialog_manager: DialogManager, event_from_user: User, **kwargs
-):
+async def events_getter(dialog_manager: DialogManager, event_from_user: User, **kwargs):
     page = dialog_manager.dialog_data.get("page", 0)
 
     async with get_db_session() as session:
         concerts: list[Concert] = (
-            (
-                await session.execute(
-                    select(Concert)
-                    .where(Concert.date >= datetime.now().date())
-                    .order_by(Concert.id)
-                )
-            )
+            (await session.execute(select(Concert).where(Concert.date >= datetime.now().date()).order_by(Concert.id)))
             .scalars()
             .all()
         )
@@ -69,9 +59,7 @@ async def events_getter(
     }
 
 
-async def vacant_positions_getter(
-    dialog_manager: DialogManager, event_from_user: User, **kwargs
-):
+async def vacant_positions_getter(dialog_manager: DialogManager, event_from_user: User, **kwargs):
     """Fetch paginated vacant positions (pending roles)."""
     page = dialog_manager.dialog_data.get("page", 0)
 
@@ -79,9 +67,7 @@ async def vacant_positions_getter(
         pending_roles: list[PendingRole] = (
             (
                 await session.execute(
-                    select(PendingRole)
-                    .options(selectinload(PendingRole.song))
-                    .order_by(PendingRole.created_at.desc())
+                    select(PendingRole).options(selectinload(PendingRole.song)).order_by(PendingRole.created_at.desc())
                 )
             )
             .scalars()
@@ -110,9 +96,7 @@ async def on_pending_role_selected(
 ):
     async with get_db_session() as session:
         pending_role: PendingRole = (
-            await session.execute(
-                select(PendingRole).where(PendingRole.id == int(item_id))
-            )
+            await session.execute(select(PendingRole).where(PendingRole.id == int(item_id)))
         ).scalar_one_or_none()
         await session.delete(pending_role)
         session.add(
@@ -152,9 +136,7 @@ router.include_router(
             Button(
                 Const("Открытые позиции"),
                 id="positions",
-                on_click=lambda c, b, m: m.switch_to(
-                    MainMenu.vacant_positions
-                ),
+                on_click=lambda c, b, m: m.switch_to(MainMenu.vacant_positions),
             ),
             Button(
                 Const("Ближайшие мероприятия"),
@@ -172,9 +154,7 @@ router.include_router(
                     id="song_select",
                     item_id_getter=lambda song: song.id,
                     items="songs",
-                    on_click=lambda c, b, m, item_id: m.start(
-                        EditSong.menu, data={"song_id": item_id}
-                    ),
+                    on_click=lambda c, b, m, item_id: m.start(EditSong.menu, data={"song_id": item_id}),
                 ),
             ),
             Row(
@@ -235,9 +215,7 @@ router.include_router(
                     id="event_select",
                     item_id_getter=lambda event: event.id,
                     items="events",
-                    on_click=lambda c, b, m, i: m.start(
-                        ConcertInfo.menu, data={"concert_id": i}
-                    ),
+                    on_click=lambda c, b, m, i: m.start(ConcertInfo.menu, data={"concert_id": i}),
                 ),
             ),
             Row(

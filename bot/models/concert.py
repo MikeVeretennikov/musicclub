@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, func
+from sqlalchemy import Column, Date, Integer, String, func
 from sqlalchemy.orm import relationship
 
 from bot.models import Base
@@ -18,5 +18,5 @@ class Concert(Base):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Concert(name={self.name}, date={self.date})>"

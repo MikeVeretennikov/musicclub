@@ -1,6 +1,5 @@
 import re
 
-
 URLPATTERN = re.compile(r"(https?://[^\s]+|www\.[^\s]+)")
 
 

@@ -20,9 +20,7 @@ engine = create_async_engine(
     echo=False,
 )
 
-AsyncSessionLocal = async_sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
-)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 
 
 @asynccontextmanager
@@ -64,8 +62,8 @@ async def init_db():
             await conn.execute(text("SELECT 1"))
             await conn.commit()
         logger.info("Database connection established successfully")
-    except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+    except Exception:
+        logger.exception("Database connection failed")
         raise
 
 

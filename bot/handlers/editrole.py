@@ -1,23 +1,17 @@
-import logging
-
 from aiogram import Router
 from aiogram.enums import ContentType
-from aiogram.types import User, CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram.types import CallbackQuery, Message
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.kbd import Button, Cancel, Url
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel, Url
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from sqlalchemy import select, delete
-from sqlalchemy.orm.sync import update
+from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.sync import update
 
-
-from bot.models import Song, SongParticipation, Person
+from bot.models import SongParticipation
 from bot.services.database import get_db_session
 from bot.services.strings import is_valid_title
-from bot.services.settings import settings
-from bot.services.url import parse_url
 from bot.states.editrole import EditRole
 
 router = Router()
@@ -48,12 +42,7 @@ async def main_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     }
 
 
-from sqlalchemy import update
-
-
-async def on_role_input(
-    message: Message, msg_input: MessageInput, dialog_manager: DialogManager
-):
+async def on_role_input(message: Message, msg_input: MessageInput, dialog_manager: DialogManager):
     new_role = message.text
 
     if not is_valid_title(new_role):
@@ -63,9 +52,7 @@ async def on_role_input(
 
     async with get_db_session() as session:
         await session.execute(
-            update(SongParticipation)
-            .where(SongParticipation.id == participation_id)
-            .values(role=new_role)
+            update(SongParticipation).where(SongParticipation.id == participation_id).values(role=new_role)
         )
         await session.commit()
 
@@ -77,17 +64,16 @@ async def on_role_input(
                     .options(selectinload(SongParticipation.song))
                 )
             ).scalar_one_or_none()
-            await message.bot.send_message(
-                chat_id=participation.person_id,
-                text=f"{message.from_user.mention_html()} изменил ваше участие в песне <b>{participation.song.title}</b> на <b>{new_role}</b>",
+            text = (
+                f"{message.from_user.mention_html()} изменил ваше участие в песне "
+                f"<b>{participation.song.title}</b> на <b>{new_role}</b>"
             )
+            await message.bot.send_message(chat_id=participation.person_id, text=text)
 
     await dialog_manager.switch_to(EditRole.menu)
 
 
-async def on_remove_confirm(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def on_remove_confirm(callback: CallbackQuery, button: Button, manager: DialogManager):
     participation_id = int(manager.start_data["participation_id"])
 
     async with get_db_session() as session:
@@ -102,15 +88,15 @@ async def on_remove_confirm(
                     )
                 )
             ).scalar_one_or_none()
+            text = (
+                f"{callback.from_user.mention_html()} удалил вас из песни "
+                f"<b>{participation.song.title}</b> с позиции <b>{participation.role}</b>"
+            )
             await callback.bot.send_message(
                 chat_id=participation.person_id,
-                text=f"{callback.from_user.mention_html()} удалил вас из песни <b>{participation.song.title}</b> с позиции <b>{participation.role}</b>",
+                text=text,
             )
-        await session.execute(
-            delete(SongParticipation).where(
-                SongParticipation.id == participation_id
-            )
-        )
+        await session.execute(delete(SongParticipation).where(SongParticipation.id == participation_id))
         await session.commit()
 
     await callback.answer("Успешно удалено")
@@ -120,12 +106,8 @@ async def on_remove_confirm(
 router.include_router(
     Dialog(
         Window(
-            Format(
-                "<b>{person_name}</b>\nв <b>{song_title}</b>\nкак <b>{role}</b>"
-            ),
-            Url(
-                Const("Перейти в профиль"), Format("tg://user?id={person_id}")
-            ),
+            Format("<b>{person_name}</b>\nв <b>{song_title}</b>\nкак <b>{role}</b>"),
+            Url(Const("Перейти в профиль"), Format("tg://user?id={person_id}")),
             Button(
                 Const("Редактировать название роли"),
                 id="edit_role",

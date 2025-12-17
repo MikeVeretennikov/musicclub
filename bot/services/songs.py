@@ -1,12 +1,11 @@
 from aiogram.types import CallbackQuery
+from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from sqlalchemy import select
-
 
 from bot.models import Song
 from bot.services.database import get_db_session
 from bot.services.settings import settings
-from aiogram_dialog import DialogManager
 
 
 async def get_paginated_songs(dialog_manager: DialogManager) -> dict:
@@ -47,9 +46,7 @@ async def get_verbose_tracklist(dialog_manager: DialogManager) -> dict:
     verbose_tracklist = []
     async with get_db_session() as session:
         for n, track_id in enumerate(dialog_manager.dialog_data["tracklist"]):
-            song: Song = (
-                await session.execute(select(Song).where(Song.id == track_id))
-            ).scalar_one_or_none()
+            song: Song = (await session.execute(select(Song).where(Song.id == track_id))).scalar_one_or_none()
             verbose_tracklist.append(f"{n + 1}: {song.title}")
     return {
         "verbose_tracklist": "\n".join(verbose_tracklist),

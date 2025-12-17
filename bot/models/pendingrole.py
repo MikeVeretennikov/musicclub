@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import relationship
 
 from bot.models import Base
@@ -14,5 +14,5 @@ class PendingRole(Base):
 
     song = relationship("Song", backref="pending_roles")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PendingRole(song_id={self.song_id}, role={self.role})>"

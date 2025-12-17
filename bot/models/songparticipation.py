@@ -1,8 +1,8 @@
 from sqlalchemy import (
-    Column,
-    Integer,
-    ForeignKey,
     BigInteger,
+    Column,
+    ForeignKey,
+    Integer,
     String,
     UniqueConstraint,
 )
@@ -31,5 +31,5 @@ class SongParticipation(Base):
         ),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SongParticipation(song={self.song.title}, person={self.person.name}, role={self.role})>"

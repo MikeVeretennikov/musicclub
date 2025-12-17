@@ -1,16 +1,12 @@
-import logging
-
 from aiogram import Router
 from aiogram.enums import ContentType
-from aiogram.types import User, CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram.types import CallbackQuery, Message
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from sqlalchemy import select
 
-from bot.models import Song, PendingRole
+from bot.models import PendingRole, Song
 from bot.services.database import get_db_session
 from bot.services.settings import settings
 from bot.services.strings import is_valid_title
@@ -83,9 +79,7 @@ async def input_roles_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
-async def remove_last_added_role(
-    callback: CallbackQuery, button: Button, manager: DialogManager
-):
+async def remove_last_added_role(callback: CallbackQuery, button: Button, manager: DialogManager):
     manager.dialog_data["roles"] = manager.dialog_data["roles"][:-1]
 
 
@@ -101,9 +95,7 @@ def generate_roles_text(roles: list[str]) -> str:
     return "\n".join(f"    - {role}" for role in roles)
 
 
-async def add_song(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
+async def add_song(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     async with get_db_session() as session:
         song = Song(
             title=dialog_manager.dialog_data["title"],
@@ -152,9 +144,7 @@ router.include_router(
                 on_click=on_description_skip,
             ),
             Cancel(Const("Отмена")),
-            MessageInput(
-                content_types=ContentType.TEXT, func=on_description_input
-            ),
+            MessageInput(content_types=ContentType.TEXT, func=on_description_input),
             state=AddSong.description,
         ),
         Window(
@@ -164,9 +154,7 @@ router.include_router(
             state=AddSong.link,
         ),
         Window(
-            Const(
-                "А теперь давай пройдемся по тому, каких людей тебе нужно набрать на роли. Отправь название роли"
-            ),
+            Const("А теперь давай пройдемся по тому, каких людей тебе нужно набрать на роли. Отправь название роли"),
             Format("{roles}", when="roles"),
             MessageInput(
                 content_types=ContentType.TEXT,
@@ -189,9 +177,7 @@ router.include_router(
             state=AddSong.add_role,
         ),
         Window(
-            Const(
-                "Уверен что хочешь добавить эту песню? Проверь информацию еще раз:"
-            ),
+            Const("Уверен что хочешь добавить эту песню? Проверь информацию еще раз:"),
             Format("Название: {title}\nСсылка: {link}\n"),
             Format("Роли, которые ищем:\n{roles}", when="roles"),
             Row(

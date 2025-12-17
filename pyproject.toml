@@ -15,10 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "ruff==0.14.0",
-    "coverage==7.10.7",
-]
+dev = ["ruff==0.14.0", "coverage==7.10.7"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -49,7 +46,7 @@ exclude = [
     "migrations",
     "node_modules",
     "venv",
-    "manage.py"
+    "manage.py",
 ]
 extend-exclude = []
 extend-include = []
@@ -58,7 +55,7 @@ fix-only = false
 force-exclude = true
 include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
 indent-width = 4
-line-length = 79
+line-length = 120
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -83,6 +80,9 @@ ignore = [
     "RUF012",
     "ANN201",
     "RUF001",
+    "ANN401",
+    "ANN003",
+    "DTZ005",
 ]
 select = ["ALL"]
 task-tags = ["TODO"]

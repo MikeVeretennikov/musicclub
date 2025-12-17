@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String
+from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.orm import relationship
 
 from bot.models import Base
@@ -12,5 +12,5 @@ class Person(Base):
 
     participations = relationship("SongParticipation", back_populates="person")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Person(name={self.name})>"

@@ -1,33 +1,23 @@
-import logging
-
 from aiogram import Router
-from aiogram.enums import ContentType
-from aiogram.types import User, CallbackQuery, Message
-from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.input import MessageInput
+from aiogram.types import User
+from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog.widgets.kbd import Button, Cancel, Column, Row, Select
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, Row, Column, Cancel, Url
-from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from sqlalchemy import select, delete
-from sqlalchemy.orm.sync import update
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-
-from bot.models import Song, SongParticipation, Person
+from bot.models import SongParticipation
 from bot.services.database import get_db_session
 from bot.services.settings import settings
 from bot.services.songparticipation import song_participation_list_out
-from bot.services.songs import prev_page, next_page
-from bot.services.url import parse_url
+from bot.services.songs import next_page, prev_page
 from bot.states.editrole import EditRole
 from bot.states.participations import MyParticipations
 
 router = Router()
 
 
-async def participations_getter(
-    dialog_manager: DialogManager, event_from_user: User, **kwargs
-):
+async def participations_getter(dialog_manager: DialogManager, event_from_user: User, **kwargs):
     """Fetch paginated songs for current page."""
     page = dialog_manager.dialog_data.get("page", 0)
 
@@ -49,9 +39,7 @@ async def participations_getter(
     dialog_manager.dialog_data["total_pages"] = total_pages
 
     return {
-        "participations": await song_participation_list_out(
-            participations[start:end]
-        ),
+        "participations": await song_participation_list_out(participations[start:end]),
         "page": page + 1,
         "total_pages": total_pages,
     }
