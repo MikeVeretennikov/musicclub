@@ -39,7 +39,7 @@
       context: .
       dockerfile: backend.Dockerfile
     ports:
-      - "51001:6969"
+      - "6969:6969"
     restart: unless-stopped
     env_file:
       - .env

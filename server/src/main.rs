@@ -4,9 +4,12 @@ use api::pb::{
     auth_service_server, concert_service_server, participation_service_server, song_service_server,
 };
 use env_logger::Env;
+use http::Method;
 use sqlx::postgres::PgPoolOptions;
 use tonic::{Result, transport::Server};
 use tonic_middleware::{MiddlewareLayer, RequestInterceptorLayer};
+use tonic_web::GrpcWebLayer;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::grpc::{
     auth::{AuthInterceptor, AuthServer},
@@ -21,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
     dotenvy::dotenv().ok();
     let addr = std::env::var("PORT")
-        .unwrap_or_else(|_| "[::1]:6969".to_string())
+        .unwrap_or_else(|_| "0.0.0.0:6969".to_string())
         .parse()
         .unwrap();
     let database_url = database_url_from_env()?;
@@ -40,8 +43,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let auth_interceptor = AuthInterceptor::new(jwt_secret.as_bytes());
     let admin_middleware = AdminOnlyMiddleware::new(admin_ids.clone());
 
+    // Allow browser clients (Connect-Web) to talk to tonic over HTTP/1 + gRPC-web.
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::POST, Method::OPTIONS])
+        .allow_headers(Any);
+
     log::info!("Server is running at {addr}");
     Server::builder()
+        .accept_http1(true)
+        .layer(cors)
+        .layer(GrpcWebLayer::new())
         .layer(MiddlewareLayer::new(LoggingMiddleware::default()))
         .layer(RequestInterceptorLayer::new(auth_interceptor))
         .layer(MiddlewareLayer::new(admin_middleware))

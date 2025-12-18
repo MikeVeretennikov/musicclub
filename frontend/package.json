@@ -10,7 +10,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "^1.4.0",
+    "@connectrpc/connect-web": "^1.4.0",
     "@bufbuild/protobuf": "^1.7.2",
     "@tanstack/react-query": "^5.18.0",
     "react": "^18.2.0",

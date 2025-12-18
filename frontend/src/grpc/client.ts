@@ -1,5 +1,9 @@
-import { createPromiseClient, Interceptor } from "@bufbuild/connect-web";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import { createClient } from "@connectrpc/connect";
+import {
+  createGrpcWebTransport,
+  Interceptor
+} from "@connectrpc/connect-web";
+
 import {
   AuthService,
   ConcertService,
@@ -19,17 +23,17 @@ const authInterceptor: Interceptor = (next) => async (req) => {
   return next(req);
 };
 
-const transport = createConnectTransport({
+const transport = createGrpcWebTransport({
   baseUrl,
   useBinaryFormat: true,
   interceptors: [authInterceptor]
 });
 
-export const songClient = createPromiseClient(SongService, transport);
-export const concertClient = createPromiseClient(ConcertService, transport);
-export const participationClient = createPromiseClient(
+export const songClient = createClient(SongService, transport);
+export const concertClient = createClient(ConcertService, transport);
+export const participationClient = createClient(
   ParticipationService,
   transport
 );
-export const authClient = createPromiseClient(AuthService, transport);
-export const userClient = createPromiseClient(UserService, transport);
+export const authClient = createClient(AuthService, transport);
+export const userClient = createClient(UserService, transport);

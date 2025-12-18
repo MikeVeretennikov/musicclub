@@ -1,4 +1,5 @@
-import { proto3, ScalarType, MethodKind, Timestamp } from "@bufbuild/protobuf";
+import { proto3, ScalarType, MethodKind, Empty, FieldMask } from "@bufbuild/protobuf";
+import { Timestamp } from "@bufbuild/protobuf";
 
 export const Song = proto3.makeMessageType(
   "song.Song",
@@ -51,7 +52,7 @@ export const UpdateSongRequest = proto3.makeMessageType(
       no: 2,
       name: "update_mask",
       kind: "message",
-      T: proto3.getFieldMask()
+      T: FieldMask
     }
   ]
 );
@@ -91,7 +92,7 @@ export const SongService = {
     deleteSong: {
       name: "DeleteSong",
       I: DeleteSongRequest,
-      O: proto3.getEmpty(),
+      O: Empty,
       kind: MethodKind.Unary
     }
   }
@@ -147,7 +148,7 @@ export const UpdateConcertRequest = proto3.makeMessageType(
       no: 2,
       name: "update_mask",
       kind: "message",
-      T: proto3.getFieldMask()
+      T: FieldMask
     }
   ]
 );
@@ -187,7 +188,7 @@ export const ConcertService = {
     deleteConcert: {
       name: "DeleteConcert",
       I: DeleteConcertRequest,
-      O: proto3.getEmpty(),
+      O: Empty,
       kind: MethodKind.Unary
     }
   }
@@ -249,7 +250,7 @@ export const UpdateParticipationRequest = proto3.makeMessageType(
       no: 2,
       name: "update_mask",
       kind: "message",
-      T: proto3.getFieldMask()
+      T: FieldMask
     }
   ]
 );
@@ -289,7 +290,7 @@ export const ParticipationService = {
     deleteParticipation: {
       name: "DeleteParticipation",
       I: DeleteParticipationRequest,
-      O: proto3.getEmpty(),
+      O: Empty,
       kind: MethodKind.Unary
     }
   }
