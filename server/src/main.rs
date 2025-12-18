@@ -11,7 +11,7 @@ use tonic_middleware::{MiddlewareLayer, RequestInterceptorLayer};
 use crate::grpc::{
     auth::{AuthInterceptor, AuthServer},
     concert::ConcertServer,
-    middleware::AdminOnlyMiddleware,
+    middleware::{AdminOnlyMiddleware, LoggingMiddleware},
     participation::ParticipationServer,
     song::SongServer,
 };
@@ -39,6 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     log::info!("Server is running at {addr}");
     Server::builder()
+        .layer(MiddlewareLayer::new(LoggingMiddleware::default()))
         .layer(RequestInterceptorLayer::new(auth_interceptor))
         .layer(MiddlewareLayer::new(admin_middleware))
         .add_service(auth_service_server::AuthServiceServer::new(
