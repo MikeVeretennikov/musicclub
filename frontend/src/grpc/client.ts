@@ -6,7 +6,6 @@ import {
   ConcertService,
   ParticipationService,
   SongService,
-  UserService
 } from "./schema";
 import { getToken } from "../lib/auth";
 
@@ -33,4 +32,3 @@ export const participationClient = createClient(
   transport
 );
 export const authClient = createClient(AuthService, transport);
-export const userClient = createClient(UserService, transport);

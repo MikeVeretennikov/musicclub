@@ -4,7 +4,6 @@ import {
   participationClient,
   songClient,
   authClient,
-  userClient
 } from "./client";
 import {
   type ConcertType,
@@ -131,10 +130,11 @@ export function useLogin() {
       const payload: PlainMessage<TgLoginType> = {
         tg_id: BigInt(tgId)
       };
+      console.log("Logging in with payload:", payload);
       const res = await authClient.loginTg(payload);
+      console.log("Server response:", res);
       saveToken(res.token);
-      const admin = await userClient.isAdmin(payload);
-      return { token: res.token, isAdmin: admin.is_admin };
+      return { token: res.token, isAdmin: res.is_admin };
     },
     onSuccess: () => qc.invalidateQueries()
   });

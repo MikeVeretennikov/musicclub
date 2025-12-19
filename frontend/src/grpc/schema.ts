@@ -301,14 +301,26 @@ export const TgLogin = proto3.makeMessageType(
   () => [{ no: 1, name: "tg_id", kind: "scalar", T: ScalarType.UINT64 }]
 );
 
+/*
+message LoginResponse {
+	// JWT token
+	string token = 1;
+	// Is specified user an admin
+	bool is_admin = 2;
+	// Time of creation of the token
+	uint64 iat = 3;
+	// Time of expiration of the token
+	uint64 exp = 4;
+}
+*/
 export const LoginResponse = proto3.makeMessageType(
   "auth.LoginResponse",
-  () => [{ no: 1, name: "token", kind: "scalar", T: ScalarType.STRING }]
-);
-
-export const IsAdminResponse = proto3.makeMessageType(
-  "auth.IsAdminResponse",
-  () => [{ no: 1, name: "is_admin", kind: "scalar", T: ScalarType.BOOL }]
+  () => [
+    { no: 1, name: "token", kind: "scalar", T: ScalarType.STRING },
+    { no: 2, name: "is_admin", kind: "scalar", T: ScalarType.BOOL },
+    { no: 3, name: "iat", kind: "scalar", T: ScalarType.UINT64 },
+    { no: 4, name: "exp", kind: "scalar", T: ScalarType.UINT64 }
+  ]
 );
 
 export const AuthService = {
@@ -318,18 +330,6 @@ export const AuthService = {
       name: "LoginTg",
       I: TgLogin,
       O: LoginResponse,
-      kind: MethodKind.Unary
-    }
-  }
-} as const;
-
-export const UserService = {
-  typeName: "auth.User",
-  methods: {
-    isAdmin: {
-      name: "IsAdmin",
-      I: TgLogin,
-      O: IsAdminResponse,
       kind: MethodKind.Unary
     }
   }
