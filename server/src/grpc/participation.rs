@@ -19,14 +19,14 @@ pub struct ParticipationServer {
 #[derive(Clone, Debug, FromRow)]
 struct ParticipationRow {
     song_id: i32,
-    person_id: i64,
+    user_id: i64,
     role: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParticipationRecord {
     pub song_id: u64,
-    pub person_id: u64,
+    pub user_id: u64,
     pub role: String,
 }
 
@@ -65,13 +65,13 @@ impl ParticipationStore for PostgresParticipationStore {
     async fn create(&self, record: ParticipationRecord) -> Result<ParticipationRecord, StoreError> {
         let row = sqlx::query_as::<_, ParticipationRow>(
             r#"
-            INSERT INTO song_participations (song_id, person_id, role)
+            INSERT INTO song_participations (song_id, users_id, role)
             VALUES ($1, $2, $3)
-            RETURNING song_id, person_id, role
+            RETURNING song_id, users_id, role
             "#,
         )
         .bind(record.song_id as i64)
-        .bind(record.person_id as i64)
+        .bind(record.user_id as i64)
         .bind(record.role)
         .fetch_one(&self.pool)
         .await
@@ -83,13 +83,13 @@ impl ParticipationStore for PostgresParticipationStore {
     async fn get(&self, record: ParticipationRecord) -> Result<ParticipationRecord, StoreError> {
         let row = sqlx::query_as::<_, ParticipationRow>(
             r#"
-            SELECT song_id, person_id, role
+            SELECT song_id, user_id, role
             FROM song_participations
-            WHERE song_id = $1 AND person_id = $2 AND role = $3
+            WHERE song_id = $1 AND user_id = $2 AND role = $3
             "#,
         )
         .bind(record.song_id as i64)
-        .bind(record.person_id as i64)
+        .bind(record.user_id as i64)
         .bind(record.role)
         .fetch_optional(&self.pool)
         .await
@@ -102,9 +102,9 @@ impl ParticipationStore for PostgresParticipationStore {
     async fn list(&self, limit: i64) -> Result<Vec<ParticipationRecord>, StoreError> {
         let rows = sqlx::query_as::<_, ParticipationRow>(
             r#"
-            SELECT song_id, person_id, role
+            SELECT song_id, user_id, role
             FROM song_participations
-            ORDER BY song_id, person_id
+            ORDER BY song_id, user_id
             LIMIT $1
             "#,
         )
@@ -125,13 +125,13 @@ impl ParticipationStore for PostgresParticipationStore {
             r#"
             UPDATE song_participations
             SET role = $1
-            WHERE song_id = $2 AND person_id = $3 AND role = $4
-            RETURNING song_id, person_id, role
+            WHERE song_id = $2 AND user_id = $3 AND role = $4
+            RETURNING song_id, user_id, role
             "#,
         )
         .bind(new_role)
         .bind(current.song_id as i64)
-        .bind(current.person_id as i64)
+        .bind(current.user_id as i64)
         .bind(current.role)
         .fetch_optional(&self.pool)
         .await
@@ -145,11 +145,11 @@ impl ParticipationStore for PostgresParticipationStore {
         let result = sqlx::query(
             r#"
             DELETE FROM song_participations
-            WHERE song_id = $1 AND person_id = $2 AND role = $3
+            WHERE song_id = $1 AND user_id = $2 AND role = $3
             "#,
         )
         .bind(record.song_id as i64)
-        .bind(record.person_id as i64)
+        .bind(record.user_id as i64)
         .bind(record.role)
         .execute(&self.pool)
         .await
@@ -191,7 +191,7 @@ impl ParticipationService for ParticipationServer {
 
         let record = ParticipationRecord {
             song_id: participation.song_id,
-            person_id: participation.tg_id,
+            user_id: participation.tg_id,
             role: participation.role_title,
         };
         let record = self.store.create(record).await.map_err(map_store_error)?;
@@ -206,7 +206,7 @@ impl ParticipationService for ParticipationServer {
 
         let record = ParticipationRecord {
             song_id: key.song_id,
-            person_id: key.tg_id,
+            user_id: key.tg_id,
             role: key.role_title,
         };
         let record = self.store.get(record).await.map_err(map_store_error)?;
@@ -240,7 +240,7 @@ impl ParticipationService for ParticipationServer {
         let updated = apply_participation_update_mask(&participation, request.update_mask)?;
         let current = ParticipationRecord {
             song_id: participation.song_id,
-            person_id: participation.tg_id,
+            user_id: participation.tg_id,
             role: participation.role_title,
         };
         let record = self
@@ -259,7 +259,7 @@ impl ParticipationService for ParticipationServer {
 
         let record = ParticipationRecord {
             song_id: key.song_id,
-            person_id: key.tg_id,
+            user_id: key.tg_id,
             role: key.role_title,
         };
         self.store.delete(record).await.map_err(map_store_error)?;
@@ -288,14 +288,14 @@ fn validate_participation(participation: &Participation) -> Result<(), Status> {
 fn record_from_row(row: ParticipationRow) -> ParticipationRecord {
     ParticipationRecord {
         song_id: row.song_id as u64,
-        person_id: row.person_id as u64,
+        user_id: row.user_id as u64,
         role: row.role,
     }
 }
 
 fn record_to_participation(row: ParticipationRecord) -> Participation {
     Participation {
-        tg_id: row.person_id,
+        tg_id: row.user_id,
         song_id: row.song_id,
         role_title: row.role,
     }
@@ -437,7 +437,7 @@ mod tests {
             &self,
             record: ParticipationRecord,
         ) -> Result<ParticipationRecord, StoreError> {
-            let key = (record.song_id, record.person_id, record.role.clone());
+            let key = (record.song_id, record.user_id, record.role.clone());
             self.data.lock().await.insert(key, record.clone());
             Ok(record)
         }
@@ -446,7 +446,7 @@ mod tests {
             &self,
             record: ParticipationRecord,
         ) -> Result<ParticipationRecord, StoreError> {
-            let key = (record.song_id, record.person_id, record.role.clone());
+            let key = (record.song_id, record.user_id, record.role.clone());
             self.data
                 .lock()
                 .await
@@ -457,7 +457,7 @@ mod tests {
 
         async fn list(&self, limit: i64) -> Result<Vec<ParticipationRecord>, StoreError> {
             let mut values: Vec<_> = self.data.lock().await.values().cloned().collect();
-            values.sort_by_key(|rec| (rec.song_id, rec.person_id, rec.role.clone()));
+            values.sort_by_key(|rec| (rec.song_id, rec.user_id, rec.role.clone()));
             values.truncate(limit as usize);
             Ok(values)
         }
@@ -468,22 +468,22 @@ mod tests {
             new_role: String,
         ) -> Result<ParticipationRecord, StoreError> {
             let mut data = self.data.lock().await;
-            let key = (current.song_id, current.person_id, current.role.clone());
+            let key = (current.song_id, current.user_id, current.role.clone());
             if data.remove(&key).is_none() {
                 return Err(StoreError::NotFound);
             }
             let updated = ParticipationRecord {
                 song_id: current.song_id,
-                person_id: current.person_id,
+                user_id: current.user_id,
                 role: new_role,
             };
-            let new_key = (updated.song_id, updated.person_id, updated.role.clone());
+            let new_key = (updated.song_id, updated.user_id, updated.role.clone());
             data.insert(new_key, updated.clone());
             Ok(updated)
         }
 
         async fn delete(&self, record: ParticipationRecord) -> Result<(), StoreError> {
-            let key = (record.song_id, record.person_id, record.role);
+            let key = (record.song_id, record.user_id, record.role);
             if self.data.lock().await.remove(&key).is_none() {
                 return Err(StoreError::NotFound);
             }
