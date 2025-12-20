@@ -13,25 +13,6 @@
     ports:
       - "8080:8080"
 
-  redis:
-    image: redis:8.2.2-alpine3.22
-    volumes:
-      - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf
-    restart: unless-stopped
-
-  bot:
-    build:
-      context: .
-      dockerfile: bot.Dockerfile
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-  
   backend:
     build:
       context: .
@@ -43,7 +24,7 @@
       - .env
     depends_on:
       - db
-  
+
   frontend:
     build:
       context: ./frontend
@@ -60,4 +41,3 @@
 
 volumes:
   postgres_data:
-  redis_data:
