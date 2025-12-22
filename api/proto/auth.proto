@@ -2,9 +2,15 @@ syntax = "proto3";
 
 package auth;
 
+// provides functionality to get jwt tokens
 service AuthService { rpc LoginTg(TgLogin) returns (LoginResponse); }
 
-message TgLogin { uint64 tg_id = 1; }
+message TgLogin {
+	uint64 tg_id = 1;
+
+	// A string with raw data transferred to the Mini App, convenient for validating data.
+	string init_data = 2;
+}
 
 message LoginResponse {
 	// JWT token
