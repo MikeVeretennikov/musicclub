@@ -36,15 +36,15 @@
     depends_on:
       - backend
 
-  bot:
-    build:
-      context: ./bot
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      - backend
+  # bot:
+  #   build:
+  #     context: ./bot
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - backend
 
 volumes:
   db_data:
