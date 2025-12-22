@@ -4,7 +4,7 @@
 // - protoc             v6.33.2
 // source: song.proto
 
-package songpb
+package proto
 
 import (
 	context "context"

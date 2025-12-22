@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file user.proto.
  */
 export const file_user: GenFile = /*@__PURE__*/
-  fileDesc("Cgp1c2VyLnByb3RvEg5tdXNpY2NsdWIudXNlciJRCgRVc2VyEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgt0Z191c2VybmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJQihaJm11c2ljY2x1YmJvdC9iYWNrZW5kL3Byb3RvL3VzZXI7dXNlcnBiYgZwcm90bzM");
+  fileDesc("Cgp1c2VyLnByb3RvEg5tdXNpY2NsdWIudXNlciJRCgRVc2VyEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgt0Z191c2VybmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJQhxaGm11c2ljY2x1YmJvdC9iYWNrZW5kL3Byb3RvYgZwcm90bzM");
 
 /**
  * Minimal user info for displaying assignments and ownership.

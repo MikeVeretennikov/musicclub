@@ -4,16 +4,13 @@
 // 	protoc        v6.33.2
 // source: event.proto
 
-package eventpb
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	permissions "musicclubbot/backend/proto/permissions"
-	song "musicclubbot/backend/proto/song"
-	_ "musicclubbot/backend/proto/user"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -260,11 +257,11 @@ func (x *Event) GetNotifyHourBefore() bool {
 }
 
 type EventDetails struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Event         *Event                     `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
-	Tracklist     *Tracklist                 `protobuf:"bytes,2,opt,name=tracklist,proto3" json:"tracklist,omitempty"`
-	Participants  []*song.RoleAssignment     `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
-	Permissions   *permissions.PermissionSet `protobuf:"bytes,4,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Tracklist     *Tracklist             `protobuf:"bytes,2,opt,name=tracklist,proto3" json:"tracklist,omitempty"`
+	Participants  []*RoleAssignment      `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
+	Permissions   *PermissionSet         `protobuf:"bytes,4,opt,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -313,14 +310,14 @@ func (x *EventDetails) GetTracklist() *Tracklist {
 	return nil
 }
 
-func (x *EventDetails) GetParticipants() []*song.RoleAssignment {
+func (x *EventDetails) GetParticipants() []*RoleAssignment {
 	if x != nil {
 		return x.Participants
 	}
 	return nil
 }
 
-func (x *EventDetails) GetPermissions() *permissions.PermissionSet {
+func (x *EventDetails) GetPermissions() *PermissionSet {
 	if x != nil {
 		return x.Permissions
 	}
@@ -719,7 +716,7 @@ const file_event_proto_rawDesc = "" +
 	"\vCreateEvent\x12#.musicclub.event.CreateEventRequest\x1a\x1d.musicclub.event.EventDetails\x12Q\n" +
 	"\vUpdateEvent\x12#.musicclub.event.UpdateEventRequest\x1a\x1d.musicclub.event.EventDetails\x12?\n" +
 	"\vDeleteEvent\x12\x18.musicclub.event.EventId\x1a\x16.google.protobuf.Empty\x12S\n" +
-	"\fSetTracklist\x12$.musicclub.event.SetTracklistRequest\x1a\x1d.musicclub.event.EventDetailsB*Z(musicclubbot/backend/proto/event;eventpbb\x06proto3"
+	"\fSetTracklist\x12$.musicclub.event.SetTracklistRequest\x1a\x1d.musicclub.event.EventDetailsB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_event_proto_rawDescOnce sync.Once
@@ -735,20 +732,20 @@ func file_event_proto_rawDescGZIP() []byte {
 
 var file_event_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_event_proto_goTypes = []any{
-	(*EventId)(nil),                   // 0: musicclub.event.EventId
-	(*ListEventsRequest)(nil),         // 1: musicclub.event.ListEventsRequest
-	(*ListEventsResponse)(nil),        // 2: musicclub.event.ListEventsResponse
-	(*Event)(nil),                     // 3: musicclub.event.Event
-	(*EventDetails)(nil),              // 4: musicclub.event.EventDetails
-	(*Tracklist)(nil),                 // 5: musicclub.event.Tracklist
-	(*TrackItem)(nil),                 // 6: musicclub.event.TrackItem
-	(*CreateEventRequest)(nil),        // 7: musicclub.event.CreateEventRequest
-	(*UpdateEventRequest)(nil),        // 8: musicclub.event.UpdateEventRequest
-	(*SetTracklistRequest)(nil),       // 9: musicclub.event.SetTracklistRequest
-	(*timestamppb.Timestamp)(nil),     // 10: google.protobuf.Timestamp
-	(*song.RoleAssignment)(nil),       // 11: musicclub.song.RoleAssignment
-	(*permissions.PermissionSet)(nil), // 12: musicclub.permissions.PermissionSet
-	(*emptypb.Empty)(nil),             // 13: google.protobuf.Empty
+	(*EventId)(nil),               // 0: musicclub.event.EventId
+	(*ListEventsRequest)(nil),     // 1: musicclub.event.ListEventsRequest
+	(*ListEventsResponse)(nil),    // 2: musicclub.event.ListEventsResponse
+	(*Event)(nil),                 // 3: musicclub.event.Event
+	(*EventDetails)(nil),          // 4: musicclub.event.EventDetails
+	(*Tracklist)(nil),             // 5: musicclub.event.Tracklist
+	(*TrackItem)(nil),             // 6: musicclub.event.TrackItem
+	(*CreateEventRequest)(nil),    // 7: musicclub.event.CreateEventRequest
+	(*UpdateEventRequest)(nil),    // 8: musicclub.event.UpdateEventRequest
+	(*SetTracklistRequest)(nil),   // 9: musicclub.event.SetTracklistRequest
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*RoleAssignment)(nil),        // 11: musicclub.song.RoleAssignment
+	(*PermissionSet)(nil),         // 12: musicclub.permissions.PermissionSet
+	(*emptypb.Empty)(nil),         // 13: google.protobuf.Empty
 }
 var file_event_proto_depIdxs = []int32{
 	10, // 0: musicclub.event.ListEventsRequest.from:type_name -> google.protobuf.Timestamp
@@ -788,6 +785,9 @@ func file_event_proto_init() {
 	if File_event_proto != nil {
 		return
 	}
+	file_song_proto_init()
+	file_user_proto_init()
+	file_permissions_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

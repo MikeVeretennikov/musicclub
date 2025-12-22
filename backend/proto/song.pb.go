@@ -4,15 +4,13 @@
 // 	protoc        v6.33.2
 // source: song.proto
 
-package songpb
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	permissions "musicclubbot/backend/proto/permissions"
-	user "musicclubbot/backend/proto/user"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -329,10 +327,10 @@ func (x *Song) GetEditableByMe() bool {
 }
 
 type SongDetails struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Song          *Song                      `protobuf:"bytes,1,opt,name=song,proto3" json:"song,omitempty"`
-	Assignments   []*RoleAssignment          `protobuf:"bytes,2,rep,name=assignments,proto3" json:"assignments,omitempty"`
-	Permissions   *permissions.PermissionSet `protobuf:"bytes,3,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Song          *Song                  `protobuf:"bytes,1,opt,name=song,proto3" json:"song,omitempty"`
+	Assignments   []*RoleAssignment      `protobuf:"bytes,2,rep,name=assignments,proto3" json:"assignments,omitempty"`
+	Permissions   *PermissionSet         `protobuf:"bytes,3,opt,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -381,7 +379,7 @@ func (x *SongDetails) GetAssignments() []*RoleAssignment {
 	return nil
 }
 
-func (x *SongDetails) GetPermissions() *permissions.PermissionSet {
+func (x *SongDetails) GetPermissions() *PermissionSet {
 	if x != nil {
 		return x.Permissions
 	}
@@ -443,7 +441,7 @@ func (x *SongLink) GetUrl() string {
 type RoleAssignment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Role          string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	User          *user.User             `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	User          *User                  `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	JoinedAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -486,7 +484,7 @@ func (x *RoleAssignment) GetRole() string {
 	return ""
 }
 
-func (x *RoleAssignment) GetUser() *user.User {
+func (x *RoleAssignment) GetUser() *User {
 	if x != nil {
 		return x.User
 	}
@@ -834,7 +832,7 @@ const file_song_proto_rawDesc = "" +
 	"\n" +
 	"DeleteSong\x12\x16.musicclub.song.SongId\x1a\x16.google.protobuf.Empty\x12H\n" +
 	"\bJoinRole\x12\x1f.musicclub.song.JoinRoleRequest\x1a\x1b.musicclub.song.SongDetails\x12J\n" +
-	"\tLeaveRole\x12 .musicclub.song.LeaveRoleRequest\x1a\x1b.musicclub.song.SongDetailsB(Z&musicclubbot/backend/proto/song;songpbb\x06proto3"
+	"\tLeaveRole\x12 .musicclub.song.LeaveRoleRequest\x1a\x1b.musicclub.song.SongDetailsB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_song_proto_rawDescOnce sync.Once
@@ -851,22 +849,22 @@ func file_song_proto_rawDescGZIP() []byte {
 var file_song_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_song_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_song_proto_goTypes = []any{
-	(SongLinkType)(0),                 // 0: musicclub.song.SongLinkType
-	(*ListSongsRequest)(nil),          // 1: musicclub.song.ListSongsRequest
-	(*ListSongsResponse)(nil),         // 2: musicclub.song.ListSongsResponse
-	(*SongId)(nil),                    // 3: musicclub.song.SongId
-	(*Song)(nil),                      // 4: musicclub.song.Song
-	(*SongDetails)(nil),               // 5: musicclub.song.SongDetails
-	(*SongLink)(nil),                  // 6: musicclub.song.SongLink
-	(*RoleAssignment)(nil),            // 7: musicclub.song.RoleAssignment
-	(*CreateSongRequest)(nil),         // 8: musicclub.song.CreateSongRequest
-	(*UpdateSongRequest)(nil),         // 9: musicclub.song.UpdateSongRequest
-	(*JoinRoleRequest)(nil),           // 10: musicclub.song.JoinRoleRequest
-	(*LeaveRoleRequest)(nil),          // 11: musicclub.song.LeaveRoleRequest
-	(*permissions.PermissionSet)(nil), // 12: musicclub.permissions.PermissionSet
-	(*user.User)(nil),                 // 13: musicclub.user.User
-	(*timestamppb.Timestamp)(nil),     // 14: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),             // 15: google.protobuf.Empty
+	(SongLinkType)(0),             // 0: musicclub.song.SongLinkType
+	(*ListSongsRequest)(nil),      // 1: musicclub.song.ListSongsRequest
+	(*ListSongsResponse)(nil),     // 2: musicclub.song.ListSongsResponse
+	(*SongId)(nil),                // 3: musicclub.song.SongId
+	(*Song)(nil),                  // 4: musicclub.song.Song
+	(*SongDetails)(nil),           // 5: musicclub.song.SongDetails
+	(*SongLink)(nil),              // 6: musicclub.song.SongLink
+	(*RoleAssignment)(nil),        // 7: musicclub.song.RoleAssignment
+	(*CreateSongRequest)(nil),     // 8: musicclub.song.CreateSongRequest
+	(*UpdateSongRequest)(nil),     // 9: musicclub.song.UpdateSongRequest
+	(*JoinRoleRequest)(nil),       // 10: musicclub.song.JoinRoleRequest
+	(*LeaveRoleRequest)(nil),      // 11: musicclub.song.LeaveRoleRequest
+	(*PermissionSet)(nil),         // 12: musicclub.permissions.PermissionSet
+	(*User)(nil),                  // 13: musicclub.user.User
+	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 15: google.protobuf.Empty
 }
 var file_song_proto_depIdxs = []int32{
 	4,  // 0: musicclub.song.ListSongsResponse.songs:type_name -> musicclub.song.Song
@@ -905,6 +903,8 @@ func file_song_proto_init() {
 	if File_song_proto != nil {
 		return
 	}
+	file_user_proto_init()
+	file_permissions_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

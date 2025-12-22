@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package musicclub.song;
 
-option go_package = "musicclubbot/backend/proto/song;songpb";
+option go_package = "musicclubbot/backend/proto";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";

@@ -5,7 +5,7 @@
     env_file:
       - .env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
   adminer:
     image: adminer
@@ -47,4 +47,4 @@
       - backend
 
 volumes:
-  postgres_data:
+  db_data:

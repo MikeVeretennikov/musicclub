@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: user.proto
 
-package userpb
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -102,7 +102,7 @@ const file_user_proto_rawDesc = "" +
 	"\vtg_username\x18\x03 \x01(\tR\n" +
 	"tgUsername\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x04 \x01(\tR\tavatarUrlB(Z&musicclubbot/backend/proto/user;userpbb\x06proto3"
+	"avatar_url\x18\x04 \x01(\tR\tavatarUrlB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_user_proto_rawDescOnce sync.Once

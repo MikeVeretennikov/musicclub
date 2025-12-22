@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: permissions.proto
 
-package permissionspb
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -259,7 +259,7 @@ const file_permissions_proto_rawDesc = "" +
 	"\x10EventPermissions\x12\x1f\n" +
 	"\vedit_events\x18\x01 \x01(\bR\n" +
 	"editEvents\x12'\n" +
-	"\x0fedit_tracklists\x18\x02 \x01(\bR\x0eeditTracklistsB6Z4musicclubbot/backend/proto/permissions;permissionspbb\x06proto3"
+	"\x0fedit_tracklists\x18\x02 \x01(\bR\x0eeditTracklistsB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_permissions_proto_rawDescOnce sync.Once

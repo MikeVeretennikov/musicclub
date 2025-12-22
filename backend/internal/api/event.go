@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	eventpb "musicclubbot/backend/proto/event"
+	eventpb "musicclubbot/backend/proto"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 

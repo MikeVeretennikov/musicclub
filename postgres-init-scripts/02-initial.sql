@@ -1,87 +1,128 @@
--- юзеры
-CREATE TABLE
-    IF NOT EXISTS users (
-        id BIGINT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT now () NOT NULL,
-        interacted_at TIMESTAMPTZ DEFAULT now () NOT NULL
-    );
+-- Core extensions.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- список песен
-CREATE TABLE
-    IF NOT EXISTS songs (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(200) NOT NULL,
-        description TEXT,
-        link TEXT,
-        -- CHECK (
-        --     link LIKE '%youtube.com/%'
-        --     OR link LIKE '%youtu.be/%'
-        --     OR link LIKE '%music.yandex.ru/%'
-        -- )
-    );
+-- Enumerations.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'song_link_type') THEN
+        CREATE TYPE song_link_type AS ENUM ('youtube', 'yandex_music', 'soundcloud');
+    END IF;
+END$$;
 
--- кто в какой песне участвует на какой роли
-CREATE TABLE
-    IF NOT EXISTS song_participations (
-        id SERIAL PRIMARY KEY,
-        song_id INTEGER NOT NULL REFERENCES songs (id) ON DELETE CASCADE,
-        users_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-        role TEXT NOT NULL,
-        CONSTRAINT unique_song_role_per_users UNIQUE (song_id, users_id, role)
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'join_request_status') THEN
+        CREATE TYPE join_request_status AS ENUM ('pending', 'approved', 'rejected');
+    END IF;
+END$$;
 
--- сами концерты
-CREATE TABLE
-    IF NOT EXISTS concerts (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(150) NOT NULL,
-        date TIMESTAMPTZ DEFAULT now ()
-    );
+-- Users and membership.
+CREATE TABLE IF NOT EXISTS app_user (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tg_user_id      BIGINT UNIQUE,
+    display_name    TEXT        NOT NULL,
+    tg_username     TEXT,
+    avatar_url      TEXT,
+    is_chat_member  BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- треклисты для концертов
-CREATE TABLE
-    IF NOT EXISTS tracklist_entries (
-        id SERIAL PRIMARY KEY,
-        concert_id INTEGER NOT NULL REFERENCES concerts (id) ON DELETE CASCADE,
-        song_id INTEGER NOT NULL REFERENCES songs (id) ON DELETE CASCADE,
-        position INTEGER NOT NULL,
-        CONSTRAINT unique_song_position_per_concert UNIQUE (concert_id, position)
-    );
+CREATE TABLE IF NOT EXISTS join_request (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+    status      join_request_status NOT NULL DEFAULT 'pending',
+    token       TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(12), 'hex'),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMPTZ
+);
 
--- свободные роли в песнях
-CREATE TABLE
-    IF NOT EXISTS pending_roles (
-        id SERIAL PRIMARY KEY,
-        song_id INTEGER NOT NULL REFERENCES songs (id) ON DELETE CASCADE,
-        role VARCHAR(200) NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT now () NOT NULL
-    );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_join_request_active
+    ON join_request (user_id)
+    WHERE status = 'pending';
 
--- логгирование
-CREATE TABLE
-    IF NOT EXISTS logs (
-        id BIGSERIAL PRIMARY KEY,
-        -- Time
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
-        -- Who
-        users_id BIGINT,
-        ip_address INET,
-        users_agent TEXT,
-        -- Where / what
-        app_name TEXT NOT NULL,
-        action TEXT NOT NULL,
-        endpoint TEXT,
-        http_method TEXT,
-        http_status INT,
-        -- Performance
-        duration_ms INT
-    );
+-- Permission flags for current user session snapshot.
+CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id                   UUID PRIMARY KEY REFERENCES app_user(id) ON DELETE CASCADE,
+    edit_own_participation    BOOLEAN NOT NULL DEFAULT FALSE,
+    edit_any_participation    BOOLEAN NOT NULL DEFAULT FALSE,
+    edit_own_songs            BOOLEAN NOT NULL DEFAULT FALSE,
+    edit_any_songs            BOOLEAN NOT NULL DEFAULT FALSE,
+    edit_events               BOOLEAN NOT NULL DEFAULT FALSE,
+    edit_tracklists           BOOLEAN NOT NULL DEFAULT FALSE
+);
 
-CREATE INDEX IF NOT EXISTS idx_logs_users_id ON logs (users_id);
+-- Songs catalog.
+CREATE TABLE IF NOT EXISTS song (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title        TEXT        NOT NULL,
+    artist       TEXT        NOT NULL,
+    description  TEXT,
+    link_kind    song_link_type NOT NULL,
+    link_url     TEXT        NOT NULL,
+    created_by   UUID        REFERENCES app_user(id) ON DELETE SET NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs (created_at);
+CREATE TABLE IF NOT EXISTS song_role (
+    song_id UUID NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    role    TEXT NOT NULL,
+    PRIMARY KEY (song_id, role)
+);
 
-CREATE INDEX IF NOT EXISTS idx_logs_app_name ON logs (app_name);
+CREATE TABLE IF NOT EXISTS song_role_assignment (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    song_id    UUID NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    role       TEXT NOT NULL,
+    user_id    UUID NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+    joined_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT song_role_exists FOREIGN KEY (song_id, role) REFERENCES song_role(song_id, role) ON DELETE CASCADE,
+    CONSTRAINT song_role_assignment_unique UNIQUE (song_id, role, user_id)
+);
 
-CREATE INDEX IF NOT EXISTS idx_logs_action ON logs (action);
+CREATE INDEX IF NOT EXISTS idx_song_role_assignment_song ON song_role_assignment (song_id);
+CREATE INDEX IF NOT EXISTS idx_song_role_assignment_user ON song_role_assignment (user_id);
+
+-- Events and tracklists.
+CREATE TABLE IF NOT EXISTS event (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title              TEXT        NOT NULL,
+    start_at           TIMESTAMPTZ,
+    location           TEXT,
+    notify_day_before  BOOLEAN NOT NULL DEFAULT FALSE,
+    notify_hour_before BOOLEAN NOT NULL DEFAULT FALSE,
+    created_by         UUID REFERENCES app_user(id) ON DELETE SET NULL,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS event_track_item (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id      UUID NOT NULL REFERENCES event(id) ON DELETE CASCADE,
+    position      INTEGER NOT NULL,
+    song_id       UUID REFERENCES song(id) ON DELETE SET NULL,
+    custom_title  TEXT,
+    custom_artist TEXT,
+    CONSTRAINT track_item_requires_title CHECK (song_id IS NOT NULL OR custom_title IS NOT NULL),
+    CONSTRAINT track_item_position UNIQUE (event_id, position),
+    CONSTRAINT track_item_identity UNIQUE (event_id, id)
+);
+
+-- Performers for events (optionally tied to a specific track item).
+CREATE TABLE IF NOT EXISTS event_participant (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id       UUID NOT NULL,
+    track_item_id  UUID,
+    user_id        UUID NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+    role           TEXT NOT NULL,
+    joined_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_event_participant_event FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
+    CONSTRAINT fk_event_participant_track_item FOREIGN KEY (event_id, track_item_id)
+        REFERENCES event_track_item(event_id, id) ON DELETE CASCADE,
+    CONSTRAINT uniq_event_participation UNIQUE (event_id, role, user_id, track_item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_start_at ON event (start_at);
+CREATE INDEX IF NOT EXISTS idx_event_participant_event ON event_participant (event_id);
+CREATE INDEX IF NOT EXISTS idx_event_participant_user ON event_participant (user_id);

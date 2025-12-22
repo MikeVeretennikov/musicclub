@@ -3,9 +3,9 @@ package api
 import (
 	"google.golang.org/grpc"
 
-	authpb "musicclubbot/backend/proto/auth"
-	eventpb "musicclubbot/backend/proto/event"
-	songpb "musicclubbot/backend/proto/song"
+	authpb "musicclubbot/backend/proto"
+	eventpb "musicclubbot/backend/proto"
+	songpb "musicclubbot/backend/proto"
 )
 
 // Register wires all service handlers to the gRPC server.

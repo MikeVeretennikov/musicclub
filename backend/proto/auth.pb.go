@@ -4,14 +4,12 @@
 // 	protoc        v6.33.2
 // source: auth.proto
 
-package authpb
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	permissions "musicclubbot/backend/proto/permissions"
-	user "musicclubbot/backend/proto/user"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -90,9 +88,9 @@ type AuthSession struct {
 	// If not a member, link to request manual approval to join the chat.
 	JoinRequestUrl string `protobuf:"bytes,5,opt,name=join_request_url,json=joinRequestUrl,proto3" json:"join_request_url,omitempty"`
 	// Convenience: current user's profile data.
-	Profile *user.User `protobuf:"bytes,6,opt,name=profile,proto3" json:"profile,omitempty"`
+	Profile *User `protobuf:"bytes,6,opt,name=profile,proto3" json:"profile,omitempty"`
 	// Permissions snapshot for the session.
-	Permissions   *permissions.PermissionSet `protobuf:"bytes,7,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	Permissions   *PermissionSet `protobuf:"bytes,7,opt,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -162,14 +160,14 @@ func (x *AuthSession) GetJoinRequestUrl() string {
 	return ""
 }
 
-func (x *AuthSession) GetProfile() *user.User {
+func (x *AuthSession) GetProfile() *User {
 	if x != nil {
 		return x.Profile
 	}
 	return nil
 }
 
-func (x *AuthSession) GetPermissions() *permissions.PermissionSet {
+func (x *AuthSession) GetPermissions() *PermissionSet {
 	if x != nil {
 		return x.Permissions
 	}
@@ -177,9 +175,9 @@ func (x *AuthSession) GetPermissions() *permissions.PermissionSet {
 }
 
 type ProfileResponse struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Profile       *user.User                 `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
-	Permissions   *permissions.PermissionSet `protobuf:"bytes,2,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       *User                  `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	Permissions   *PermissionSet         `protobuf:"bytes,2,opt,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,14 +212,14 @@ func (*ProfileResponse) Descriptor() ([]byte, []int) {
 	return file_auth_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ProfileResponse) GetProfile() *user.User {
+func (x *ProfileResponse) GetProfile() *User {
 	if x != nil {
 		return x.Profile
 	}
 	return nil
 }
 
-func (x *ProfileResponse) GetPermissions() *permissions.PermissionSet {
+func (x *ProfileResponse) GetPermissions() *PermissionSet {
 	if x != nil {
 		return x.Permissions
 	}
@@ -253,7 +251,7 @@ const file_auth_proto_rawDesc = "" +
 	"\vAuthService\x12P\n" +
 	"\x11LoginWithTelegram\x12\x1e.musicclub.auth.TgLoginRequest\x1a\x1b.musicclub.auth.AuthSession\x12E\n" +
 	"\n" +
-	"GetProfile\x12\x16.google.protobuf.Empty\x1a\x1f.musicclub.auth.ProfileResponseB(Z&musicclubbot/backend/proto/auth;authpbb\x06proto3"
+	"GetProfile\x12\x16.google.protobuf.Empty\x1a\x1f.musicclub.auth.ProfileResponseB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -269,12 +267,12 @@ func file_auth_proto_rawDescGZIP() []byte {
 
 var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_auth_proto_goTypes = []any{
-	(*TgLoginRequest)(nil),            // 0: musicclub.auth.TgLoginRequest
-	(*AuthSession)(nil),               // 1: musicclub.auth.AuthSession
-	(*ProfileResponse)(nil),           // 2: musicclub.auth.ProfileResponse
-	(*user.User)(nil),                 // 3: musicclub.user.User
-	(*permissions.PermissionSet)(nil), // 4: musicclub.permissions.PermissionSet
-	(*emptypb.Empty)(nil),             // 5: google.protobuf.Empty
+	(*TgLoginRequest)(nil),  // 0: musicclub.auth.TgLoginRequest
+	(*AuthSession)(nil),     // 1: musicclub.auth.AuthSession
+	(*ProfileResponse)(nil), // 2: musicclub.auth.ProfileResponse
+	(*User)(nil),            // 3: musicclub.user.User
+	(*PermissionSet)(nil),   // 4: musicclub.permissions.PermissionSet
+	(*emptypb.Empty)(nil),   // 5: google.protobuf.Empty
 }
 var file_auth_proto_depIdxs = []int32{
 	3, // 0: musicclub.auth.AuthSession.profile:type_name -> musicclub.user.User
@@ -297,6 +295,8 @@ func file_auth_proto_init() {
 	if File_auth_proto != nil {
 		return
 	}
+	file_permissions_proto_init()
+	file_user_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
