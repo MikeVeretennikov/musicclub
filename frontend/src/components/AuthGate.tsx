@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Code, ConnectError } from "@connectrpc/connect";
 
 import { getProfile, login, register } from "../services/api";
-import { setToken } from "../services/config";
+import { setTokenPair } from "../services/config";
 import { CredentialsSchema, RegisterUserRequestSchema } from "../proto/auth_pb";
 import SongList from "./SongList";
 import EventList from "./EventList";
@@ -53,13 +53,13 @@ const AuthGate: React.FC = () => {
 				session = await login(create(CredentialsSchema, { username, password }));
 			}
 
-			if (session.tokens?.accessToken == null) {
+			if (session.tokens?.accessToken == null || session.tokens?.refreshToken == null) {
 				setAuthError("server didn't return token pair")
 				setIsLoading(false);
 				return
 			}
 
-			setToken(session.tokens?.accessToken);
+			setTokenPair(session.tokens?.accessToken, session.tokens?.refreshToken);
 			await queryClient.invalidateQueries({ queryKey: ["profile"] });
 		} catch (err: any) {
 			if (err instanceof ConnectError) {
@@ -203,7 +203,7 @@ const AuthGate: React.FC = () => {
 						<div style={{ textAlign: "center", marginTop: 8 }}>
 							<button
 								type="button"
-								className="button-text"
+								className="button secondary"
 								onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
 								disabled={isLoading}
 							>

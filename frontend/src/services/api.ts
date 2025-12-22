@@ -1,5 +1,4 @@
 import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
 import type {
 	AuthSession,
 	Credentials,
@@ -7,7 +6,7 @@ import type {
 } from "../proto/auth_pb";
 import { create } from "@bufbuild/protobuf";
 
-import { transport } from "./config";
+import { clearTokenPair, transport } from "./config";
 import { AuthService, ProfileResponseSchema, TgLoginRequestSchema } from "../proto/auth_pb";
 import { SongService, CreateSongRequestSchema, JoinRoleRequestSchema, LeaveRoleRequestSchema, ListSongsRequestSchema, SongIdSchema, UpdateSongRequestSchema } from "../proto/song_pb";
 import { EventService, CreateEventRequestSchema, EventIdSchema, ListEventsRequestSchema, SetTracklistRequestSchema, UpdateEventRequestSchema } from "../proto/event_pb";
@@ -29,8 +28,7 @@ export const register = async (request: RegisterUserRequest): Promise<AuthSessio
 
 // Clear all login state
 export const logout = () => {
-	localStorage.removeItem("access_token");
-	localStorage.removeItem("refresh_token");
+	clearTokenPair();
 	window.location.href = "/";
 };
 
