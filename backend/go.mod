@@ -3,6 +3,7 @@ module musicclubbot/backend
 go 1.24.0
 
 require (
+	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
 	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.11
