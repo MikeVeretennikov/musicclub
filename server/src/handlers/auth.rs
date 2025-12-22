@@ -32,7 +32,8 @@ impl AuthServer {
     fn generate_claims(&self, payload: u64) -> Claims {
         let now = Self::now_ts();
         Claims {
-            sub: payload,
+            tg_id: payload,
+            auth_date: None,
             iat: now,
             exp: now + self.ttl.as_secs() as usize,
             is_admin: self.admin_ids.contains(&payload),
@@ -82,7 +83,10 @@ mod tests {
         admins.insert(7_u64);
         let server = AuthServer::new(b"secret", admins, Duration::from_secs(3600));
         let response = server
-            .login_tg(Request::new(TgLogin { tg_id: 7 }))
+            .login_tg(Request::new(TgLogin {
+                tg_id: 7,
+                init_data: "tg_id=7".to_string(),
+            }))
             .await
             .expect("response");
 
@@ -94,7 +98,7 @@ mod tests {
         )
         .expect("decoded");
 
-        assert_eq!(decoded.claims.sub, 7);
+        assert_eq!(decoded.claims.tg_id, 7);
         assert!(decoded.claims.is_admin);
     }
 
@@ -135,7 +139,10 @@ mod tests {
         let mut client = create_client(addr).await;
 
         let response = client
-            .login_tg(Request::new(TgLogin { tg_id: 11 }))
+            .login_tg(Request::new(TgLogin {
+                tg_id: 11,
+                init_data: "tg_id=11".to_string(),
+            }))
             .await
             .expect("login")
             .into_inner();

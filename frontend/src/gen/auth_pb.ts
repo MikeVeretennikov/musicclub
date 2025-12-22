@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file auth.proto.
  */
 export const file_auth: GenFile = /*@__PURE__*/
-  fileDesc("CgphdXRoLnByb3RvEgRhdXRoIhgKB1RnTG9naW4SDQoFdGdfaWQYASABKAQiSgoNTG9naW5SZXNwb25zZRINCgV0b2tlbhgBIAEoCRIQCghpc19hZG1pbhgCIAEoCBILCgNpYXQYAyABKAQSCwoDZXhwGAQgASgEMjwKC0F1dGhTZXJ2aWNlEi0KB0xvZ2luVGcSDS5hdXRoLlRnTG9naW4aEy5hdXRoLkxvZ2luUmVzcG9uc2ViBnByb3RvMw");
+  fileDesc("CgphdXRoLnByb3RvEgRhdXRoIisKB1RnTG9naW4SDQoFdGdfaWQYASABKAQSEQoJaW5pdF9kYXRhGAIgASgJIkoKDUxvZ2luUmVzcG9uc2USDQoFdG9rZW4YASABKAkSEAoIaXNfYWRtaW4YAiABKAgSCwoDaWF0GAMgASgEEgsKA2V4cBgEIAEoBDI8CgtBdXRoU2VydmljZRItCgdMb2dpblRnEg0uYXV0aC5UZ0xvZ2luGhMuYXV0aC5Mb2dpblJlc3BvbnNlYgZwcm90bzM");
 
 /**
  * @generated from message auth.TgLogin
@@ -20,6 +20,13 @@ export type TgLogin = Message<"auth.TgLogin"> & {
    * @generated from field: uint64 tg_id = 1;
    */
   tgId: bigint;
+
+  /**
+   * A string with raw data transferred to the Mini App, convenient for validating data.
+   *
+   * @generated from field: string init_data = 2;
+   */
+  initData: string;
 };
 
 /**
@@ -70,6 +77,8 @@ export const LoginResponseSchema: GenMessage<LoginResponse> = /*@__PURE__*/
   messageDesc(file_auth, 1);
 
 /**
+ * provides functionality to get jwt tokens
+ *
  * @generated from service auth.AuthService
  */
 export const AuthService: GenService<{

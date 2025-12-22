@@ -524,13 +524,19 @@ mod tests {
 
         let mut auth_client = create_auth_client(addr).await;
         let admin_token = auth_client
-            .login_tg(Request::new(api::pb::TgLogin { tg_id: 42 }))
+            .login_tg(Request::new(api::pb::TgLogin {
+                tg_id: 42,
+                init_data: "tg_id=42".to_string(),
+            }))
             .await
             .expect("login admin")
             .into_inner()
             .token;
         let user_token = auth_client
-            .login_tg(Request::new(api::pb::TgLogin { tg_id: 7 }))
+            .login_tg(Request::new(api::pb::TgLogin {
+                tg_id: 7,
+                init_data: "tg_id=7".to_string(),
+            }))
             .await
             .expect("login user")
             .into_inner()

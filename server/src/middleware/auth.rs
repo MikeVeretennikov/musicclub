@@ -45,7 +45,7 @@ impl RequestInterceptor for AuthInterceptor {
         let claims = self.decode(token)?;
 
         let mut req = req;
-        let header_value = tonic::codegen::http::HeaderValue::from_str(&claims.sub.to_string())
+        let header_value = tonic::codegen::http::HeaderValue::from_str(&claims.tg_id.to_string())
             .map_err(|_| Status::internal("invalid user id header"))?;
         req.headers_mut().insert("x-user-id", header_value);
         Ok(req)
