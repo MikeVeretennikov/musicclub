@@ -1,7 +1,7 @@
 import { type Interceptor } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-web";
 
-export const BACKEND_URL = import.meta.env.VITE_GRPC_HOST ?? "http://backend:6969";
+export const BACKEND_URL = import.meta.env.VITE_GRPC_HOST ?? "http://localhost:6969";
 
 let TOKEN = "PLACEHOLDER";
 

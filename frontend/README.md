@@ -6,7 +6,6 @@ React + Vite UI tailored for Telegram Mini App embedding. It talks to the gRPC b
 
 ```bash
 cd frontend
-cp .env.example .env   # adjust VITE_GRPC_HOST if needed
 npm install
 npm run dev
 ```
