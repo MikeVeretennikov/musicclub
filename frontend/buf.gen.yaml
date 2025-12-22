@@ -3,7 +3,7 @@ inputs:
   - directory: ../proto
 plugins:
   - local: protoc-gen-es
-    out: src/gen
+    out: src/proto
     opt: 
       - target=ts
       - import_extension=ts
