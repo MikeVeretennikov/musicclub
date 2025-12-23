@@ -14,9 +14,7 @@
       - "8533:8080"
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: pacable/musicclub-backend:latest
     ports:
       - "6969:6969"
     restart: unless-stopped
@@ -26,20 +24,14 @@
       - db
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_GRPC_HOST: ${VITE_GRPC_HOST}
+    image: pacable/musicclub-frontend:latest
     ports:
       - "5173:5173"
     env_file:
       - .env
 
   bot:
-    build:
-      context: ./bot
-      dockerfile: Dockerfile
+    image: pacable/musicclub-bot:latest
     restart: unless-stopped
     env_file:
       - .env
