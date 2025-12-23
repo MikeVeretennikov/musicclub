@@ -14,80 +14,122 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"musicclubbot/backend/internal/api"
+	"musicclubbot/backend/internal/api/auth"
 	"musicclubbot/backend/internal/config"
 )
 
-// Run initializes and starts the gRPC server with stub handlers.
+var propagatedCtxKeys = []string{"cfg", "log", "db"}
+
 func Run(ctx context.Context) error {
-	cfg := ctx.Value("cfg").(config.Config)
-	log := ctx.Value("log").(*logger.Logger)
+	cfg := mustCfg(ctx)
+	log := mustLog(ctx)
+
 	lis, err := net.Listen("tcp", cfg.GRPCAddr())
 	if err != nil {
 		return fmt.Errorf("listen on %s: %w", cfg.GRPCAddr(), err)
 	}
 
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			withBaseContext(ctx),
-			loggingInterceptor,
-			api.AuthInterceptor,
-		),
-	)
-
+	grpcServer := newGrpcServer(ctx)
 	api.Register(grpcServer)
 	reflection.Register(grpcServer)
 
-	grpcWeb := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
-		// Allow all origins for now; tighten when hosts are known.
-		return true
-	}))
-
-	handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Handle CORS preflight explicitly.
-		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Grpc-Web, X-User-Agent, Authorization")
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		if grpcWeb.IsGrpcWebRequest(r) || grpcWeb.IsGrpcWebSocketRequest(r) || grpcWeb.IsAcceptableGrpcCorsRequest(r) {
-			grpcWeb.ServeHTTP(w, r)
-			return
-		}
-
-		w.WriteHeader(http.StatusNotFound)
-	}), &http2.Server{})
-
-	srv := &http.Server{
-		Handler: handler,
+	httpServer := &http.Server{
+		Handler: newHTTPHandler(grpcServer),
 	}
 
-	// Graceful stop on context cancellation.
-	go func() {
-		<-ctx.Done()
-		grpcServer.GracefulStop()
-		_ = srv.Shutdown(context.Background())
-	}()
+	go gracefulShutdown(ctx, grpcServer, httpServer)
 
 	log.Infof("Starting gRPC server on %s", cfg.GRPCAddr())
-	if err := srv.Serve(lis); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Serve(lis); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("serve gRPC/gRPC-Web: %w", err)
 	}
 
 	return nil
 }
 
-// withBaseContext propagates shared values (cfg, log, db, etc.) from the parent context
-// into every incoming request context so handlers can retrieve them.
+/* -------------------- helpers -------------------- */
+
+func newGrpcServer(baseCtx context.Context) *grpc.Server {
+	return grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			withBaseContext(baseCtx),
+			loggingInterceptor,
+			auth.AuthInterceptor,
+		),
+	)
+}
+
+func newHTTPHandler(grpcServer *grpc.Server) http.Handler {
+	grpcWeb := grpcweb.WrapServer(
+		grpcServer,
+		grpcweb.WithOriginFunc(func(string) bool { return true }),
+	)
+
+	return h2c.NewHandler(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if handlePreflight(w, r) {
+				return
+			}
+
+			if isGrpcWebRequest(grpcWeb, r) {
+				grpcWeb.ServeHTTP(w, r)
+				return
+			}
+
+			http.NotFound(w, r)
+		}),
+		&http2.Server{},
+	)
+}
+
+func gracefulShutdown(ctx context.Context, grpcServer *grpc.Server, httpServer *http.Server) {
+	<-ctx.Done()
+	grpcServer.GracefulStop()
+	_ = httpServer.Shutdown(context.Background())
+}
+
 func withBaseContext(base context.Context) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		for _, key := range []string{"cfg", "log", "db"} {
+	return func(
+		ctx context.Context,
+		req interface{},
+		_ *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		for _, key := range propagatedCtxKeys {
 			if v := base.Value(key); v != nil {
 				ctx = context.WithValue(ctx, key, v)
 			}
 		}
 		return handler(ctx, req)
 	}
+
+}
+
+func mustCfg(ctx context.Context) config.Config {
+	return ctx.Value("cfg").(config.Config)
+}
+
+func mustLog(ctx context.Context) *logger.Logger {
+	return ctx.Value("log").(*logger.Logger)
+}
+
+func handlePreflight(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodOptions {
+		return false
+	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set(
+		"Access-Control-Allow-Headers",
+		"Content-Type, X-Grpc-Web, X-User-Agent, Authorization",
+	)
+	w.WriteHeader(http.StatusNoContent)
+	return true
+}
+
+func isGrpcWebRequest(gw *grpcweb.WrappedGrpcServer, r *http.Request) bool {
+	return gw.IsGrpcWebRequest(r) ||
+		gw.IsGrpcWebSocketRequest(r) ||
+		gw.IsAcceptableGrpcCorsRequest(r)
 }

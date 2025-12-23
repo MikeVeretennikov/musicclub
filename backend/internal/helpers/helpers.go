@@ -1,23 +1,21 @@
-package api
+package helpers
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"musicclubbot/backend/proto"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	authpb "musicclubbot/backend/proto"
-	eventpb "musicclubbot/backend/proto"
-	permissionpb "musicclubbot/backend/proto"
-	songpb "musicclubbot/backend/proto"
 )
 
-func dbFromCtx(ctx context.Context) (*sql.DB, error) {
+func DbFromCtx(ctx context.Context) (*sql.DB, error) {
 	db, ok := ctx.Value("db").(*sql.DB)
 	if !ok || db == nil {
 		return nil, status.Error(codes.Internal, "database connection not available in context")
@@ -25,7 +23,7 @@ func dbFromCtx(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func userIDFromCtx(ctx context.Context) (string, error) {
+func UserIDFromCtx(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
 		return "", status.Error(codes.Unauthenticated, "user not authenticated")
@@ -33,38 +31,38 @@ func userIDFromCtx(ctx context.Context) (string, error) {
 	return userID, nil
 }
 
-func loadUserById(ctx context.Context, db *sql.DB, userID string) (*authpb.User, error) {
+func LoadUserById(ctx context.Context, db *sql.DB, userID string) (*proto.User, error) {
 	row := db.QueryRowContext(ctx, `
 		SELECT id, display_name, username, COALESCE(avatar_url, '')
 		FROM app_user WHERE id = $1
 	`, userID)
-	var u authpb.User
+	var u proto.User
 	if err := row.Scan(&u.Id, &u.DisplayName, &u.Username, &u.AvatarUrl); err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 
-func loadUserByUsername(ctx context.Context, db *sql.DB, username string) (*authpb.User, error) {
+func LoadUserByUsername(ctx context.Context, db *sql.DB, username string) (*proto.User, error) {
 	row := db.QueryRowContext(ctx, `
 		SELECT id, display_name, username, COALESCE(avatar_url, '')
 		FROM app_user WHERE username = $1
 	`, username)
-	var u authpb.User
+	var u proto.User
 	if err := row.Scan(&u.Id, &u.DisplayName, &u.Username, &u.AvatarUrl); err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 
-func loadPermissions(ctx context.Context, db *sql.DB, userID string) (*permissionpb.PermissionSet, error) {
+func LoadPermissions(ctx context.Context, db *sql.DB, userID string) (*proto.PermissionSet, error) {
 	row := db.QueryRowContext(ctx, `
 		SELECT edit_own_participation, edit_any_participation,
 		       edit_own_songs, edit_any_songs,
 		       edit_events, edit_tracklists
 		FROM user_permissions WHERE user_id = $1
 	`, userID)
-	var p permissionpb.PermissionSet
+	var p proto.PermissionSet
 	var joinOwn, joinAny, songsOwn, songsAny, events, tracks bool
 	switch err := row.Scan(&joinOwn, &joinAny, &songsOwn, &songsAny, &events, &tracks); err {
 	case nil:
@@ -75,48 +73,48 @@ func loadPermissions(ctx context.Context, db *sql.DB, userID string) (*permissio
 		return nil, err
 	}
 
-	p.Join = &permissionpb.JoinPermissions{
+	p.Join = &proto.JoinPermissions{
 		EditOwnParticipation: joinOwn,
 		EditAnyParticipation: joinAny,
 	}
-	p.Songs = &permissionpb.SongPermissions{
+	p.Songs = &proto.SongPermissions{
 		EditOwnSongs: songsOwn,
 		EditAnySongs: songsAny,
 	}
-	p.Events = &permissionpb.EventPermissions{
+	p.Events = &proto.EventPermissions{
 		EditEvents:     events,
 		EditTracklists: tracks,
 	}
 	return &p, nil
 }
 
-func mapSongLinkType(dbValue string) songpb.SongLinkType {
+func MapSongLinkType(dbValue string) proto.SongLinkType {
 	switch strings.ToLower(dbValue) {
 	case "youtube":
-		return songpb.SongLinkType_SONG_LINK_TYPE_YOUTUBE
+		return proto.SongLinkType_SONG_LINK_TYPE_YOUTUBE
 	case "yandex_music":
-		return songpb.SongLinkType_SONG_LINK_TYPE_YANDEX_MUSIC
+		return proto.SongLinkType_SONG_LINK_TYPE_YANDEX_MUSIC
 	case "soundcloud":
-		return songpb.SongLinkType_SONG_LINK_TYPE_SOUNDCLOUD
+		return proto.SongLinkType_SONG_LINK_TYPE_SOUNDCLOUD
 	default:
-		return songpb.SongLinkType_SONG_LINK_TYPE_UNKNOWN
+		return proto.SongLinkType_SONG_LINK_TYPE_UNKNOWN
 	}
 }
 
-func mapSongLinkKindToDB(kind songpb.SongLinkType) (string, error) {
+func MapSongLinkKindToDB(kind proto.SongLinkType) (string, error) {
 	switch kind {
-	case songpb.SongLinkType_SONG_LINK_TYPE_YOUTUBE:
+	case proto.SongLinkType_SONG_LINK_TYPE_YOUTUBE:
 		return "youtube", nil
-	case songpb.SongLinkType_SONG_LINK_TYPE_YANDEX_MUSIC:
+	case proto.SongLinkType_SONG_LINK_TYPE_YANDEX_MUSIC:
 		return "yandex_music", nil
-	case songpb.SongLinkType_SONG_LINK_TYPE_SOUNDCLOUD:
+	case proto.SongLinkType_SONG_LINK_TYPE_SOUNDCLOUD:
 		return "soundcloud", nil
 	default:
 		return "", errors.New("unsupported song link type")
 	}
 }
 
-func permissionAllowsSongEdit(perms *permissionpb.PermissionSet, ownerID sql.NullString, currentID string) bool {
+func PermissionAllowsSongEdit(perms *proto.PermissionSet, ownerID sql.NullString, currentID string) bool {
 	if perms == nil || perms.Songs == nil {
 		return false
 	}
@@ -126,7 +124,7 @@ func permissionAllowsSongEdit(perms *permissionpb.PermissionSet, ownerID sql.Nul
 	return perms.Songs.EditOwnSongs && ownerID.String != "" && ownerID.String == currentID
 }
 
-func permissionAllowsJoinEdit(perms *permissionpb.PermissionSet, ownerID, currentID string) bool {
+func PermissionAllowsJoinEdit(perms *proto.PermissionSet, ownerID, currentID string) bool {
 	if perms == nil || perms.Join == nil {
 		return false
 	}
@@ -136,52 +134,52 @@ func permissionAllowsJoinEdit(perms *permissionpb.PermissionSet, ownerID, curren
 	return perms.Join.EditOwnParticipation && ownerID != "" && ownerID == currentID
 }
 
-func permissionAllowsEventEdit(perms *permissionpb.PermissionSet) bool {
+func PermissionAllowsEventEdit(perms *proto.PermissionSet) bool {
 	return perms != nil && perms.Events != nil && perms.Events.EditEvents
 }
 
-func permissionAllowsTracklistEdit(perms *permissionpb.PermissionSet) bool {
+func PermissionAllowsTracklistEdit(perms *proto.PermissionSet) bool {
 	return perms != nil && perms.Events != nil && (perms.Events.EditTracklists || perms.Events.EditEvents)
 }
 
-func loadSongDetails(ctx context.Context, db *sql.DB, songID, currentUserID string) (*songpb.SongDetails, error) {
+func LoadSongDetails(ctx context.Context, db *sql.DB, songID, currentUserID string) (*proto.SongDetails, error) {
 	row := db.QueryRowContext(ctx, `
 		SELECT id, title, artist, description, link_kind, link_url, COALESCE(created_by, NULL)
 		FROM song WHERE id = $1
 	`, songID)
-	var s songpb.Song
+	var s proto.Song
 	var linkKind, linkURL string
 	var creatorID sql.NullString
 	if err := row.Scan(&s.Id, &s.Title, &s.Artist, &s.Description, &linkKind, &linkURL, &creatorID); err != nil {
 		return nil, err
 	}
-	s.Link = &songpb.SongLink{Kind: mapSongLinkType(linkKind), Url: linkURL}
+	s.Link = &proto.SongLink{Kind: MapSongLinkType(linkKind), Url: linkURL}
 
-	roles, err := loadSongRoles(ctx, db, songID)
+	roles, err := LoadSongRoles(ctx, db, songID)
 	if err != nil {
 		return nil, err
 	}
 	s.AvailableRoles = roles
 
-	perms, err := loadPermissions(ctx, db, currentUserID)
+	perms, err := LoadPermissions(ctx, db, currentUserID)
 	if err != nil {
 		return nil, err
 	}
-	s.EditableByMe = permissionAllowsSongEdit(perms, creatorID, currentUserID)
+	s.EditableByMe = PermissionAllowsSongEdit(perms, creatorID, currentUserID)
 
-	assignments, err := loadSongAssignments(ctx, db, songID)
+	assignments, err := LoadSongAssignments(ctx, db, songID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &songpb.SongDetails{
+	return &proto.SongDetails{
 		Song:        &s,
 		Assignments: assignments,
 		Permissions: perms,
 	}, nil
 }
 
-func loadSongRoles(ctx context.Context, db *sql.DB, songID string) ([]string, error) {
+func LoadSongRoles(ctx context.Context, db *sql.DB, songID string) ([]string, error) {
 	rows, err := db.QueryContext(ctx, `SELECT role FROM song_role WHERE song_id = $1 ORDER BY role`, songID)
 	if err != nil {
 		return nil, err
@@ -198,7 +196,7 @@ func loadSongRoles(ctx context.Context, db *sql.DB, songID string) ([]string, er
 	return roles, rows.Err()
 }
 
-func loadSongAssignments(ctx context.Context, db *sql.DB, songID string) ([]*songpb.RoleAssignment, error) {
+func LoadSongAssignments(ctx context.Context, db *sql.DB, songID string) ([]*proto.RoleAssignment, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT sra.role,
 		       au.id, au.display_name, COALESCE(au.username, ''), COALESCE(au.avatar_url, ''),
@@ -212,16 +210,16 @@ func loadSongAssignments(ctx context.Context, db *sql.DB, songID string) ([]*son
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*songpb.RoleAssignment
+	var items []*proto.RoleAssignment
 	for rows.Next() {
 		var role, uid, display, username, avatar string
 		var joined time.Time
 		if err := rows.Scan(&role, &uid, &display, &username, &avatar, &joined); err != nil {
 			return nil, err
 		}
-		items = append(items, &songpb.RoleAssignment{
+		items = append(items, &proto.RoleAssignment{
 			Role: role,
-			User: &authpb.User{
+			User: &proto.User{
 				Id:          uid,
 				DisplayName: display,
 				Username:    username,
@@ -233,12 +231,12 @@ func loadSongAssignments(ctx context.Context, db *sql.DB, songID string) ([]*son
 	return items, rows.Err()
 }
 
-func loadEventDetails(ctx context.Context, db *sql.DB, eventID, currentUserID string) (*eventpb.EventDetails, error) {
+func LoadEventDetails(ctx context.Context, db *sql.DB, eventID, currentUserID string) (*proto.EventDetails, error) {
 	row := db.QueryRowContext(ctx, `
 		SELECT id, title, start_at, location, notify_day_before, notify_hour_before
 		FROM event WHERE id = $1
 	`, eventID)
-	var e eventpb.Event
+	var e proto.Event
 	var start sql.NullTime
 	if err := row.Scan(&e.Id, &e.Title, &start, &e.Location, &e.NotifyDayBefore, &e.NotifyHourBefore); err != nil {
 		return nil, err
@@ -247,22 +245,22 @@ func loadEventDetails(ctx context.Context, db *sql.DB, eventID, currentUserID st
 		e.StartAt = timestamppb.New(start.Time)
 	}
 
-	tracklist, err := loadTracklist(ctx, db, eventID)
+	tracklist, err := LoadTracklist(ctx, db, eventID)
 	if err != nil {
 		return nil, err
 	}
 
-	participants, err := loadEventParticipants(ctx, db, eventID)
+	participants, err := LoadEventParticipants(ctx, db, eventID)
 	if err != nil {
 		return nil, err
 	}
 
-	perms, err := loadPermissions(ctx, db, currentUserID)
+	perms, err := LoadPermissions(ctx, db, currentUserID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &eventpb.EventDetails{
+	return &proto.EventDetails{
 		Event:        &e,
 		Tracklist:    tracklist,
 		Participants: participants,
@@ -270,7 +268,7 @@ func loadEventDetails(ctx context.Context, db *sql.DB, eventID, currentUserID st
 	}, nil
 }
 
-func loadTracklist(ctx context.Context, db *sql.DB, eventID string) (*eventpb.Tracklist, error) {
+func LoadTracklist(ctx context.Context, db *sql.DB, eventID string) (*proto.Tracklist, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT position, COALESCE(song_id, ''), COALESCE(custom_title, ''), COALESCE(custom_artist, '')
 		FROM event_track_item
@@ -281,24 +279,24 @@ func loadTracklist(ctx context.Context, db *sql.DB, eventID string) (*eventpb.Tr
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*eventpb.TrackItem
+	var items []*proto.TrackItem
 	for rows.Next() {
 		var pos int32
 		var songID, customTitle, customArtist string
 		if err := rows.Scan(&pos, &songID, &customTitle, &customArtist); err != nil {
 			return nil, err
 		}
-		items = append(items, &eventpb.TrackItem{
+		items = append(items, &proto.TrackItem{
 			Order:        uint32(pos),
 			SongId:       songID,
 			CustomTitle:  customTitle,
 			CustomArtist: customArtist,
 		})
 	}
-	return &eventpb.Tracklist{Items: items}, rows.Err()
+	return &proto.Tracklist{Items: items}, rows.Err()
 }
 
-func loadEventParticipants(ctx context.Context, db *sql.DB, eventID string) ([]*songpb.RoleAssignment, error) {
+func LoadEventParticipants(ctx context.Context, db *sql.DB, eventID string) ([]*proto.RoleAssignment, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT ep.role,
 		       au.id, au.display_name, COALESCE(au.username, ''), COALESCE(au.avatar_url, ''),
@@ -312,16 +310,16 @@ func loadEventParticipants(ctx context.Context, db *sql.DB, eventID string) ([]*
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*songpb.RoleAssignment
+	var items []*proto.RoleAssignment
 	for rows.Next() {
 		var role, uid, display, username, avatar string
 		var joined time.Time
 		if err := rows.Scan(&role, &uid, &display, &username, &avatar, &joined); err != nil {
 			return nil, err
 		}
-		items = append(items, &songpb.RoleAssignment{
+		items = append(items, &proto.RoleAssignment{
 			Role: role,
-			User: &authpb.User{
+			User: &proto.User{
 				Id:          uid,
 				DisplayName: display,
 				Username:    username,
@@ -333,7 +331,7 @@ func loadEventParticipants(ctx context.Context, db *sql.DB, eventID string) ([]*
 	return items, rows.Err()
 }
 
-func replaceTracklist(ctx context.Context, tx *sql.Tx, eventID string, tracklist *eventpb.Tracklist) error {
+func ReplaceTracklist(ctx context.Context, tx *sql.Tx, eventID string, tracklist *proto.Tracklist) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM event_track_item WHERE event_id = $1`, eventID); err != nil {
 		return err
 	}
@@ -349,4 +347,80 @@ func replaceTracklist(ctx context.Context, tx *sql.Tx, eventID string, tracklist
 		}
 	}
 	return nil
+}
+
+// Helper functions
+func AcceptablePassword(password string) bool {
+	if password == "" {
+		return false
+	}
+	if len(password) < 8 {
+		return false
+	}
+	// Add more complexity checks if needed
+	// e.g., require at least one uppercase, one lowercase, one number, one special char
+	return true
+}
+
+func GetUserPermissions(
+	ctx context.Context,
+	db any,
+	userID uuid.UUID,
+) (*proto.PermissionSet, error) {
+
+	type queryRower interface {
+		QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	}
+
+	var q queryRower
+
+	switch d := db.(type) {
+	case *sql.DB:
+		q = d
+	case *sql.Tx:
+		q = d
+	default:
+		return nil, fmt.Errorf("unsupported db type %T", db)
+	}
+
+	permissions := &proto.PermissionSet{
+		Join:   &proto.JoinPermissions{},
+		Songs:  &proto.SongPermissions{},
+		Events: &proto.EventPermissions{},
+	}
+
+	err := q.QueryRowContext(ctx, `
+		SELECT
+			edit_own_participation,
+			edit_any_participation,
+			edit_own_songs,
+			edit_any_songs,
+			edit_events,
+			edit_tracklists
+		FROM user_permissions
+		WHERE user_id = $1
+	`, userID).Scan(
+		&permissions.Join.EditOwnParticipation,
+		&permissions.Join.EditAnyParticipation,
+		&permissions.Songs.EditOwnSongs,
+		&permissions.Songs.EditAnySongs,
+		&permissions.Events.EditEvents,
+		&permissions.Events.EditTracklists,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// user has no explicit permissions → return defaults
+			return permissions, nil
+		}
+		return nil, err
+	}
+
+	return permissions, nil
+}
+
+var PublicMethods = map[string]bool{
+	"/musicclub.auth.AuthService/Login":    true,
+	"/musicclub.auth.AuthService/Register": true,
+	"/musicclub.auth.AuthService/Refresh":  true,
 }
