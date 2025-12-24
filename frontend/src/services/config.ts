@@ -5,6 +5,10 @@ import { AuthService } from "../proto/auth_pb";
 
 export const BACKEND_URL = import.meta.env.VITE_GRPC_HOST ?? "http://localhost:6969";
 
+// 🔧 Отладка: показываем URL, который будет использоваться
+console.log("🔧 [DEBUG] Backend URL:", BACKEND_URL);
+console.log("🔧 [DEBUG] VITE_GRPC_HOST env:", import.meta.env.VITE_GRPC_HOST);
+
 const ACCESS_TOKEN_COOKIE = "mc_access_token";
 const REFRESH_TOKEN_COOKIE = "mc_refresh_token";
 const ACCESS_TOKEN_DEFAULT_MAX_AGE = 15 * 60; // 15 minutes
@@ -127,11 +131,34 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 		}
 	};
 
+	// 🔧 Отладка: показываем какой запрос отправляется
+	console.log("📤 [DEBUG] gRPC Request:", {
+		url: req.url,
+		method: req.method,
+		service: req.service.typeName,
+		hasAuth: !!accessToken
+	});
+
 	await prepareAuth(false);
 
 	try {
-		return await next(req);
+		const response = await next(req);
+		console.log("✅ [DEBUG] gRPC Response OK:", req.url);
+		return response;
 	} catch (err) {
+		// 🔧 Отладка: детали ошибки
+		console.error("❌ [DEBUG] gRPC Request failed:", req.url);
+		console.error("❌ [DEBUG] Error details:", err);
+
+		if (err instanceof ConnectError) {
+			console.error("❌ [DEBUG] ConnectError:", {
+				code: err.code,
+				codeName: Code[err.code],
+				message: err.message,
+				rawMessage: err.rawMessage,
+			});
+		}
+
 		if (!retried && err instanceof ConnectError && err.code === Code.Unauthenticated) {
 			retried = true;
 			await prepareAuth(true);

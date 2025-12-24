@@ -2,12 +2,13 @@ import { createClient } from "@connectrpc/connect";
 import type {
 	AuthSession,
 	Credentials,
-	RegisterUserRequest
+	RegisterUserRequest,
+	TelegramWebAppAuthRequest
 } from "../proto/auth_pb";
 import { create } from "@bufbuild/protobuf";
 
 import { clearTokenPair, transport } from "./config";
-import { AuthService, ProfileResponseSchema, TgLoginRequestSchema } from "../proto/auth_pb";
+import { AuthService, ProfileResponseSchema, TelegramWebAppAuthRequestSchema, TgLoginRequestSchema } from "../proto/auth_pb";
 import { SongService, CreateSongRequestSchema, JoinRoleRequestSchema, LeaveRoleRequestSchema, ListSongsRequestSchema, SongIdSchema, UpdateSongRequestSchema } from "../proto/song_pb";
 import { EventService, CreateEventRequestSchema, EventIdSchema, ListEventsRequestSchema, SetTracklistRequestSchema, UpdateEventRequestSchema } from "../proto/event_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
@@ -25,6 +26,11 @@ export const login = async (credentials: Credentials): Promise<AuthSession> => {
 // Register new user
 export const register = async (request: RegisterUserRequest): Promise<AuthSession> => {
 	return await authClient.register(request);
+};
+
+// Authenticate via Telegram WebApp
+export const telegramWebAppAuth = async (initData: string): Promise<AuthSession> => {
+	return await authClient.telegramWebAppAuth(create(TelegramWebAppAuthRequestSchema, { initData }));
 };
 
 // Clear all login state

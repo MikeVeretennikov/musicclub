@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file auth.proto.
  */
 export const file_auth: GenFile = /*@__PURE__*/
-  fileDesc("CgphdXRoLnByb3RvEg5tdXNpY2NsdWIuYXV0aCIxCgtDcmVkZW50aWFscxIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJuChNSZWdpc3RlclVzZXJSZXF1ZXN0EjAKC2NyZWRlbnRpYWxzGAEgASgLMhsubXVzaWNjbHViLmF1dGguQ3JlZGVudGlhbHMSJQoHcHJvZmlsZRgCIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXIiJwoOUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSI4CglUb2tlblBhaXISFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkiKQoTVGdMb2dpbkxpbmtSZXNwb25zZRISCgpsb2dpbl9saW5rGAEgASgJIkgKDlRnTG9naW5SZXF1ZXN0EiIKBHVzZXIYASABKAsyFC5tdXNpY2NsdWIudXNlci5Vc2VyEhIKCnRnX3VzZXJfaWQYAiABKAQi5gEKC0F1dGhTZXNzaW9uEikKBnRva2VucxgBIAEoCzIZLm11c2ljY2x1Yi5hdXRoLlRva2VuUGFpchILCgNpYXQYAiABKAQSCwoDZXhwGAMgASgEEhYKDmlzX2NoYXRfbWVtYmVyGAQgASgIEhgKEGpvaW5fcmVxdWVzdF91cmwYBSABKAkSJQoHcHJvZmlsZRgGIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXISOQoLcGVybWlzc2lvbnMYByABKAsyJC5tdXNpY2NsdWIucGVybWlzc2lvbnMuUGVybWlzc2lvblNldCJzCg9Qcm9maWxlUmVzcG9uc2USJQoHcHJvZmlsZRgBIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXISOQoLcGVybWlzc2lvbnMYAiABKAsyJC5tdXNpY2NsdWIucGVybWlzc2lvbnMuUGVybWlzc2lvblNldDL4AgoLQXV0aFNlcnZpY2USTAoIUmVnaXN0ZXISIy5tdXNpY2NsdWIuYXV0aC5SZWdpc3RlclVzZXJSZXF1ZXN0GhsubXVzaWNjbHViLmF1dGguQXV0aFNlc3Npb24SQQoFTG9naW4SGy5tdXNpY2NsdWIuYXV0aC5DcmVkZW50aWFscxobLm11c2ljY2x1Yi5hdXRoLkF1dGhTZXNzaW9uEkQKB1JlZnJlc2gSHi5tdXNpY2NsdWIuYXV0aC5SZWZyZXNoUmVxdWVzdBoZLm11c2ljY2x1Yi5hdXRoLlRva2VuUGFpchJLCg5HZXRUZ0xvZ2luTGluaxIULm11c2ljY2x1Yi51c2VyLlVzZXIaIy5tdXNpY2NsdWIuYXV0aC5UZ0xvZ2luTGlua1Jlc3BvbnNlEkUKCkdldFByb2ZpbGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHy5tdXNpY2NsdWIuYXV0aC5Qcm9maWxlUmVzcG9uc2VCHFoabXVzaWNjbHViYm90L2JhY2tlbmQvcHJvdG9iBnByb3RvMw", [file_google_protobuf_empty, file_permissions, file_user]);
+  fileDesc("CgphdXRoLnByb3RvEg5tdXNpY2NsdWIuYXV0aCIxCgtDcmVkZW50aWFscxIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJuChNSZWdpc3RlclVzZXJSZXF1ZXN0EjAKC2NyZWRlbnRpYWxzGAEgASgLMhsubXVzaWNjbHViLmF1dGguQ3JlZGVudGlhbHMSJQoHcHJvZmlsZRgCIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXIiJwoOUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSI4CglUb2tlblBhaXISFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkiKQoTVGdMb2dpbkxpbmtSZXNwb25zZRISCgpsb2dpbl9saW5rGAEgASgJIkgKDlRnTG9naW5SZXF1ZXN0EiIKBHVzZXIYASABKAsyFC5tdXNpY2NsdWIudXNlci5Vc2VyEhIKCnRnX3VzZXJfaWQYAiABKAQi5gEKC0F1dGhTZXNzaW9uEikKBnRva2VucxgBIAEoCzIZLm11c2ljY2x1Yi5hdXRoLlRva2VuUGFpchILCgNpYXQYAiABKAQSCwoDZXhwGAMgASgEEhYKDmlzX2NoYXRfbWVtYmVyGAQgASgIEhgKEGpvaW5fcmVxdWVzdF91cmwYBSABKAkSJQoHcHJvZmlsZRgGIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXISOQoLcGVybWlzc2lvbnMYByABKAsyJC5tdXNpY2NsdWIucGVybWlzc2lvbnMuUGVybWlzc2lvblNldCJzCg9Qcm9maWxlUmVzcG9uc2USJQoHcHJvZmlsZRgBIAEoCzIULm11c2ljY2x1Yi51c2VyLlVzZXISOQoLcGVybWlzc2lvbnMYAiABKAsyJC5tdXNpY2NsdWIucGVybWlzc2lvbnMuUGVybWlzc2lvblNldCIuChlUZWxlZ3JhbVdlYkFwcEF1dGhSZXF1ZXN0EhEKCWluaXRfZGF0YRgBIAEoCTLWAwoLQXV0aFNlcnZpY2USTAoIUmVnaXN0ZXISIy5tdXNpY2NsdWIuYXV0aC5SZWdpc3RlclVzZXJSZXF1ZXN0GhsubXVzaWNjbHViLmF1dGguQXV0aFNlc3Npb24SQQoFTG9naW4SGy5tdXNpY2NsdWIuYXV0aC5DcmVkZW50aWFscxobLm11c2ljY2x1Yi5hdXRoLkF1dGhTZXNzaW9uEkQKB1JlZnJlc2gSHi5tdXNpY2NsdWIuYXV0aC5SZWZyZXNoUmVxdWVzdBoZLm11c2ljY2x1Yi5hdXRoLlRva2VuUGFpchJLCg5HZXRUZ0xvZ2luTGluaxIULm11c2ljY2x1Yi51c2VyLlVzZXIaIy5tdXNpY2NsdWIuYXV0aC5UZ0xvZ2luTGlua1Jlc3BvbnNlEkUKCkdldFByb2ZpbGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHy5tdXNpY2NsdWIuYXV0aC5Qcm9maWxlUmVzcG9uc2USXAoSVGVsZWdyYW1XZWJBcHBBdXRoEikubXVzaWNjbHViLmF1dGguVGVsZWdyYW1XZWJBcHBBdXRoUmVxdWVzdBobLm11c2ljY2x1Yi5hdXRoLkF1dGhTZXNzaW9uQhxaGm11c2ljY2x1YmJvdC9iYWNrZW5kL3Byb3RvYgZwcm90bzM", [file_google_protobuf_empty, file_permissions, file_user]);
 
 /**
  * @generated from message musicclub.auth.Credentials
@@ -224,6 +224,25 @@ export const ProfileResponseSchema: GenMessage<ProfileResponse> = /*@__PURE__*/
   messageDesc(file_auth, 7);
 
 /**
+ * @generated from message musicclub.auth.TelegramWebAppAuthRequest
+ */
+export type TelegramWebAppAuthRequest = Message<"musicclub.auth.TelegramWebAppAuthRequest"> & {
+  /**
+   * Raw initData string from Telegram WebApp
+   *
+   * @generated from field: string init_data = 1;
+   */
+  initData: string;
+};
+
+/**
+ * Describes the message musicclub.auth.TelegramWebAppAuthRequest.
+ * Use `create(TelegramWebAppAuthRequestSchema)` to create a new message.
+ */
+export const TelegramWebAppAuthRequestSchema: GenMessage<TelegramWebAppAuthRequest> = /*@__PURE__*/
+  messageDesc(file_auth, 8);
+
+/**
  * Authentication and membership gating for the app.
  *
  * @generated from service musicclub.auth.AuthService
@@ -278,6 +297,16 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof EmptySchema;
     output: typeof ProfileResponseSchema;
+  },
+  /**
+   * Authenticates user via Telegram WebApp initData.
+   *
+   * @generated from rpc musicclub.auth.AuthService.TelegramWebAppAuth
+   */
+  telegramWebAppAuth: {
+    methodKind: "unary";
+    input: typeof TelegramWebAppAuthRequestSchema;
+    output: typeof AuthSessionSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_auth, 0);

@@ -4,7 +4,7 @@ from uuid import UUID
 import logging
 
 from aiogram import Bot, Dispatcher, Router
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.utils.i18n import I18n, gettext as _
 from aiogram.utils.i18n.middleware import I18nMiddleware
@@ -128,8 +128,20 @@ async def cmd_start_with_args(message: Message, command: CommandObject):
 async def cmd_start(message: Message):
     logger.info("Received command /start without args")
 
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🎸 Открыть Music Club",
+                    web_app=WebAppInfo(url=WEBAPP_URL)
+                )
+            ]
+        ]
+    )
+
     await message.answer(
-        _("Welcome! Click the button below to open the webapp:\n{url}").format(url=WEBAPP_URL),
+        _("Добро пожаловать в Music Club! 🎸\n\nНажмите кнопку ниже, чтобы открыть приложение:"),
+        reply_markup=keyboard
     )
 
 
@@ -151,6 +163,7 @@ async def main():
     dp.include_router(router)
 
     logger.info("Starting polling for bot")
+    logger.info("WebApp URL: %s", WEBAPP_URL)
     await dp.start_polling(bot)
 
 
