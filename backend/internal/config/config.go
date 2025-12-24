@@ -10,6 +10,8 @@ type Config struct {
 	DbUrl        string
 	JwtSecretKey []byte
 	BotUsername  string
+	BotToken     string
+	ChatID       string
 }
 
 // Load reads configuration from environment with sane defaults.
@@ -18,12 +20,16 @@ func Load() Config {
 	url := getenv("POSTGRES_URL", "postgres://user:password@localhost:5432/musicclubbot")
 	jwtSecret := []byte(getenv("JWT_SECRET", "change-this-in-prod"))
 	botUsername := getenv("BOT_USERNAME", "YourBotUsername")
+	botToken := getenv("BOT_TOKEN", "")
+	chatID := getenv("CHAT_ID", "")
 
 	return Config{
 		GRPCPort:     port,
 		DbUrl:        url,
 		JwtSecretKey: jwtSecret,
 		BotUsername:  botUsername,
+		BotToken:     botToken,
+		ChatID:       chatID,
 	}
 }
 

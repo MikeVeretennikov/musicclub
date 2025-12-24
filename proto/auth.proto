@@ -24,6 +24,9 @@ service AuthService {
 
   // Returns current user profile and permissions for UI gating.
   rpc GetProfile(google.protobuf.Empty) returns (ProfileResponse);
+
+  // Authenticates user via Telegram WebApp initData.
+  rpc TelegramWebAppAuth(TelegramWebAppAuthRequest) returns (AuthSession);
 }
 
 message Credentials {
@@ -79,4 +82,9 @@ message AuthSession {
 message ProfileResponse {
   musicclub.user.User profile = 1;
   musicclub.permissions.PermissionSet permissions = 2;
+}
+
+message TelegramWebAppAuthRequest {
+  // Raw initData string from Telegram WebApp
+  string init_data = 1;
 }

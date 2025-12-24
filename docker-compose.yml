@@ -31,6 +31,8 @@
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_GRPC_HOST: ${VITE_GRPC_HOST}
     ports:
       - "5173:5173"
     env_file:

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Code, ConnectError } from "@connectrpc/connect";
 
-import { getProfile, getTgLoginLink, login, logout, register } from "../services/api";
+import { getProfile, getTgLoginLink, login, logout, register, telegramWebAppAuth } from "../services/api";
 import { setTokenPair } from "../services/config";
 import { CredentialsSchema, RegisterUserRequestSchema } from "../proto/auth_pb";
 import SongList from "./SongList";
@@ -12,23 +12,16 @@ import type { PermissionSet } from "../proto/permissions_pb";
 import { UserSchema, type User } from "../proto/user_pb";
 import { create } from "@bufbuild/protobuf";
 
-type AuthMode = "login" | "register";
-
 const AuthGate: React.FC = () => {
 	const queryClient = useQueryClient();
-	const [authMode, setAuthMode] = useState<AuthMode>("login");
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
-	const [displayName, setDisplayName] = useState("");
-	const [avatarUrl, setAvatarUrl] = useState("");
 	const [authError, setAuthError] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isAuthenticating, setIsAuthenticating] = useState(false);
 	const [tgLinkError, setTgLinkError] = useState<string | null>(null);
 
 	const profileQuery = useQuery({
 		queryKey: ["profile"],
 		queryFn: () => getProfile(),
-		retry: false, // Don't retry on auth errors
+		retry: false,
 	});
 
 	const isUnauthedCode = profileQuery.isError && (profileQuery.error as ConnectError)?.code === Code.Unauthenticated;
@@ -39,53 +32,59 @@ const AuthGate: React.FC = () => {
 		mutationFn: () => getTgLoginLink(profile ? { id: profile.id } : undefined),
 	});
 
-	const handleAuthSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setAuthError(null);
-		setIsLoading(true);
-
-		try {
-			let session;
-
-			if (authMode === "register") {
-				session = await register(create(RegisterUserRequestSchema, {
-					credentials: create(CredentialsSchema, { username, password }),
-					profile: create(UserSchema, {
-						displayName: displayName || username,
-						avatarUrl: avatarUrl || "",
-					}),
-				}));
-			} else {
-				session = await login(create(CredentialsSchema, { username, password }));
-			}
-
-			if (session.tokens?.accessToken == null || session.tokens?.refreshToken == null) {
-				setAuthError("server didn't return token pair")
-				setIsLoading(false);
-				return
-			}
-
-			setTokenPair(session.tokens?.accessToken, session.tokens?.refreshToken);
-			await queryClient.invalidateQueries({ queryKey: ["profile"] });
-		} catch (err: any) {
-			if (err instanceof ConnectError) {
-				setAuthError(err.message);
-			} else {
-				setAuthError((err as Error).message);
-			}
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	// Clear form when switching modes
+	// Auto-authenticate via Telegram WebApp
 	useEffect(() => {
-		setAuthError(null);
-		if (authMode === "login") {
-			setDisplayName("");
-			setAvatarUrl("");
+		const tg = window.Telegram?.WebApp;
+
+		console.log("🔧 [DEBUG] Telegram WebApp:", tg);
+		console.log("🔧 [DEBUG] initData:", tg?.initData);
+		console.log("🔧 [DEBUG] initDataUnsafe:", tg?.initDataUnsafe);
+
+		if (!tg || !tg.initData) {
+			console.warn("⚠️ Not running in Telegram WebApp or initData is empty");
+			return;
 		}
-	}, [authMode]);
+
+		// Signal to Telegram that the app is ready
+		tg.ready();
+		tg.expand();
+
+		const performTelegramAuth = async () => {
+			if (isAuthenticating || profileQuery.data) {
+				return;
+			}
+
+			setIsAuthenticating(true);
+			setAuthError(null);
+
+			console.log("🔐 Authenticating with initData:", tg.initData);
+
+			try {
+				const session = await telegramWebAppAuth(tg.initData);
+
+				if (session.tokens?.accessToken == null || session.tokens?.refreshToken == null) {
+					setAuthError("Сервер не вернул токены авторизации");
+					setIsAuthenticating(false);
+					return;
+				}
+
+				setTokenPair(session.tokens.accessToken, session.tokens.refreshToken);
+				await queryClient.invalidateQueries({ queryKey: ["profile"] });
+			} catch (err: any) {
+				if (err instanceof ConnectError) {
+					setAuthError(err.message);
+				} else {
+					setAuthError((err as Error).message);
+				}
+			} finally {
+				setIsAuthenticating(false);
+			}
+		};
+
+		if (isUnauthedCode && !isAuthenticating) {
+			performTelegramAuth();
+		}
+	}, [isUnauthedCode, isAuthenticating, profileQuery.data, queryClient]);
 
 	if (profileQuery.isLoading) {
 		return (
@@ -99,6 +98,41 @@ const AuthGate: React.FC = () => {
 	}
 
 	if (isUnauthedCode) {
+		// Check if we're in Telegram WebApp
+		const tg = window.Telegram?.WebApp;
+
+		if (!tg || !tg.initData) {
+			// Not in Telegram - show error message
+			return (
+				<div className="card" style={{ maxWidth: 400, margin: "80px auto" }}>
+					<div className="card-title" style={{ marginBottom: 16 }}>
+						<span role="img" aria-label="music">
+							🎸
+						</span>
+						Музыкальный клуб
+					</div>
+					<p style={{ color: "var(--muted)", lineHeight: 1.4, marginBottom: 24 }}>
+						Это приложение доступно только через Telegram Mini App.
+					</p>
+					<div style={{
+						padding: "16px",
+						backgroundColor: "var(--accent-bg)",
+						border: "1px solid var(--accent)",
+						borderRadius: "8px",
+						color: "var(--text)"
+					}}>
+						<strong style={{ display: "block", marginBottom: 8 }}>Как открыть приложение:</strong>
+						<ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
+							<li>Откройте Telegram</li>
+							<li>Найдите бота @{window.location.hostname.includes('localhost') ? 'mikeaiogrambot' : 'YourBotUsername'}</li>
+							<li>Нажмите кнопку "Открыть приложение"</li>
+						</ol>
+					</div>
+				</div>
+			);
+		}
+
+		// In Telegram, show authenticating state
 		return (
 			<div className="card" style={{ maxWidth: 400, margin: "80px auto" }}>
 				<div className="card-title" style={{ marginBottom: 16 }}>
@@ -107,119 +141,25 @@ const AuthGate: React.FC = () => {
 					</span>
 					Музыкальный клуб
 				</div>
-				<p style={{ color: "var(--muted)", lineHeight: 1.4, marginBottom: 24 }}>
-					{authMode === "login"
-						? "Войдите в свой аккаунт для доступа к клубу"
-						: "Создайте новый аккаунт для участия в клубе"}
-				</p>
-
-				<form onSubmit={handleAuthSubmit}>
-					<div style={{ display: "grid", gap: 16 }}>
-						<div>
-							<label className="form-label">Имя пользователя</label>
-							<input
-								className="input"
-								type="text"
-								placeholder="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								required
-								disabled={isLoading}
-							/>
-						</div>
-
-						<div>
-							<label className="form-label">Пароль</label>
-							<input
-								className="input"
-								type="password"
-								placeholder="password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-								disabled={isLoading}
-								minLength={8}
-							/>
-							{authMode === "login" && (
-								<small style={{ color: "var(--muted)", display: "block", marginTop: 4 }}>
-									Минимум 8 символов
-								</small>
-							)}
-						</div>
-
-						{authMode === "register" && (
-							<>
-								<div>
-									<label className="form-label">Отображаемое имя (необязательно)</label>
-									<input
-										className="input"
-										type="text"
-										placeholder="Иван Иванов"
-										value={displayName}
-										onChange={(e) => setDisplayName(e.target.value)}
-										disabled={isLoading}
-									/>
-									<small style={{ color: "var(--muted)", display: "block", marginTop: 4 }}>
-										Если не указано, будет использовано имя пользователя
-									</small>
-								</div>
-
-								<div>
-									<label className="form-label">Аватар URL (необязательно)</label>
-									<input
-										className="input"
-										type="url"
-										placeholder="https://example.com/avatar.jpg"
-										value={avatarUrl}
-										onChange={(e) => setAvatarUrl(e.target.value)}
-										disabled={isLoading}
-									/>
-								</div>
-							</>
-						)}
-
-						{authError && (
-							<div style={{
-								padding: "12px",
-								backgroundColor: "var(--danger-bg)",
-								border: "1px solid var(--danger)",
-								borderRadius: "8px",
-								color: "var(--danger)"
-							}}>
-								{authError}
-							</div>
-						)}
-
-						<button
-							className="button"
-							type="submit"
-							disabled={isLoading || !username || !password}
-							style={{ width: "100%" }}
-						>
-							{isLoading ? (
-								<>
-									<span className="spinner" style={{ marginRight: 8 }} />
-									{authMode === "login" ? "Входим..." : "Регистрируем..."}
-								</>
-							) : (
-								authMode === "login" ? "Войти" : "Зарегистрироваться"
-							)}
-						</button>
-
-						<div style={{ textAlign: "center", marginTop: 8 }}>
-							<button
-								type="button"
-								className="button secondary"
-								onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
-								disabled={isLoading}
-							>
-								{authMode === "login"
-									? "Нет аккаунта? Зарегистрироваться"
-									: "Уже есть аккаунт? Войти"}
-							</button>
-						</div>
+				{authError ? (
+					<div style={{
+						padding: "16px",
+						backgroundColor: "var(--danger-bg)",
+						border: "1px solid var(--danger)",
+						borderRadius: "8px",
+						color: "var(--danger)",
+						marginBottom: 16
+					}}>
+						{authError}
 					</div>
-				</form>
+				) : (
+					<div style={{ textAlign: "center", padding: "40px 0" }}>
+						<div className="spinner" style={{ marginBottom: 16 }} />
+						<p style={{ color: "var(--muted)" }}>
+							Авторизация через Telegram...
+						</p>
+					</div>
+				)}
 			</div>
 		);
 	}

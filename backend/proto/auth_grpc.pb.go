@@ -20,11 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName       = "/musicclub.auth.AuthService/Register"
-	AuthService_Login_FullMethodName          = "/musicclub.auth.AuthService/Login"
-	AuthService_Refresh_FullMethodName        = "/musicclub.auth.AuthService/Refresh"
-	AuthService_GetTgLoginLink_FullMethodName = "/musicclub.auth.AuthService/GetTgLoginLink"
-	AuthService_GetProfile_FullMethodName     = "/musicclub.auth.AuthService/GetProfile"
+	AuthService_Register_FullMethodName           = "/musicclub.auth.AuthService/Register"
+	AuthService_Login_FullMethodName              = "/musicclub.auth.AuthService/Login"
+	AuthService_Refresh_FullMethodName            = "/musicclub.auth.AuthService/Refresh"
+	AuthService_GetTgLoginLink_FullMethodName     = "/musicclub.auth.AuthService/GetTgLoginLink"
+	AuthService_GetProfile_FullMethodName         = "/musicclub.auth.AuthService/GetProfile"
+	AuthService_TelegramWebAppAuth_FullMethodName = "/musicclub.auth.AuthService/TelegramWebAppAuth"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -43,6 +44,8 @@ type AuthServiceClient interface {
 	GetTgLoginLink(ctx context.Context, in *User, opts ...grpc.CallOption) (*TgLoginLinkResponse, error)
 	// Returns current user profile and permissions for UI gating.
 	GetProfile(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ProfileResponse, error)
+	// Authenticates user via Telegram WebApp initData.
+	TelegramWebAppAuth(ctx context.Context, in *TelegramWebAppAuthRequest, opts ...grpc.CallOption) (*AuthSession, error)
 }
 
 type authServiceClient struct {
@@ -103,6 +106,16 @@ func (c *authServiceClient) GetProfile(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
+func (c *authServiceClient) TelegramWebAppAuth(ctx context.Context, in *TelegramWebAppAuthRequest, opts ...grpc.CallOption) (*AuthSession, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthSession)
+	err := c.cc.Invoke(ctx, AuthService_TelegramWebAppAuth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -119,6 +132,8 @@ type AuthServiceServer interface {
 	GetTgLoginLink(context.Context, *User) (*TgLoginLinkResponse, error)
 	// Returns current user profile and permissions for UI gating.
 	GetProfile(context.Context, *emptypb.Empty) (*ProfileResponse, error)
+	// Authenticates user via Telegram WebApp initData.
+	TelegramWebAppAuth(context.Context, *TelegramWebAppAuthRequest) (*AuthSession, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -143,6 +158,9 @@ func (UnimplementedAuthServiceServer) GetTgLoginLink(context.Context, *User) (*T
 }
 func (UnimplementedAuthServiceServer) GetProfile(context.Context, *emptypb.Empty) (*ProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetProfile not implemented")
+}
+func (UnimplementedAuthServiceServer) TelegramWebAppAuth(context.Context, *TelegramWebAppAuthRequest) (*AuthSession, error) {
+	return nil, status.Error(codes.Unimplemented, "method TelegramWebAppAuth not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -255,6 +273,24 @@ func _AuthService_GetProfile_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_TelegramWebAppAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TelegramWebAppAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).TelegramWebAppAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_TelegramWebAppAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).TelegramWebAppAuth(ctx, req.(*TelegramWebAppAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -281,6 +317,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProfile",
 			Handler:    _AuthService_GetProfile_Handler,
+		},
+		{
+			MethodName: "TelegramWebAppAuth",
+			Handler:    _AuthService_TelegramWebAppAuth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

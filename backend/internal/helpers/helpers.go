@@ -420,7 +420,8 @@ func GetUserPermissions(
 }
 
 var PublicMethods = map[string]bool{
-	"/musicclub.auth.AuthService/Login":    true,
-	"/musicclub.auth.AuthService/Register": true,
-	"/musicclub.auth.AuthService/Refresh":  true,
+	"/musicclub.auth.AuthService/Login":              true,
+	"/musicclub.auth.AuthService/Register":           true,
+	"/musicclub.auth.AuthService/Refresh":            true,
+	"/musicclub.auth.AuthService/TelegramWebAppAuth": true,
 }

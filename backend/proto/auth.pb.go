@@ -469,6 +469,51 @@ func (x *ProfileResponse) GetPermissions() *PermissionSet {
 	return nil
 }
 
+type TelegramWebAppAuthRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Raw initData string from Telegram WebApp
+	InitData      string `protobuf:"bytes,1,opt,name=init_data,json=initData,proto3" json:"init_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TelegramWebAppAuthRequest) Reset() {
+	*x = TelegramWebAppAuthRequest{}
+	mi := &file_auth_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TelegramWebAppAuthRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TelegramWebAppAuthRequest) ProtoMessage() {}
+
+func (x *TelegramWebAppAuthRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TelegramWebAppAuthRequest.ProtoReflect.Descriptor instead.
+func (*TelegramWebAppAuthRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *TelegramWebAppAuthRequest) GetInitData() string {
+	if x != nil {
+		return x.InitData
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -504,14 +549,17 @@ const file_auth_proto_rawDesc = "" +
 	"\vpermissions\x18\a \x01(\v2$.musicclub.permissions.PermissionSetR\vpermissions\"\x89\x01\n" +
 	"\x0fProfileResponse\x12.\n" +
 	"\aprofile\x18\x01 \x01(\v2\x14.musicclub.user.UserR\aprofile\x12F\n" +
-	"\vpermissions\x18\x02 \x01(\v2$.musicclub.permissions.PermissionSetR\vpermissions2\xf8\x02\n" +
+	"\vpermissions\x18\x02 \x01(\v2$.musicclub.permissions.PermissionSetR\vpermissions\"8\n" +
+	"\x19TelegramWebAppAuthRequest\x12\x1b\n" +
+	"\tinit_data\x18\x01 \x01(\tR\binitData2\xd6\x03\n" +
 	"\vAuthService\x12L\n" +
 	"\bRegister\x12#.musicclub.auth.RegisterUserRequest\x1a\x1b.musicclub.auth.AuthSession\x12A\n" +
 	"\x05Login\x12\x1b.musicclub.auth.Credentials\x1a\x1b.musicclub.auth.AuthSession\x12D\n" +
 	"\aRefresh\x12\x1e.musicclub.auth.RefreshRequest\x1a\x19.musicclub.auth.TokenPair\x12K\n" +
 	"\x0eGetTgLoginLink\x12\x14.musicclub.user.User\x1a#.musicclub.auth.TgLoginLinkResponse\x12E\n" +
 	"\n" +
-	"GetProfile\x12\x16.google.protobuf.Empty\x1a\x1f.musicclub.auth.ProfileResponseB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
+	"GetProfile\x12\x16.google.protobuf.Empty\x1a\x1f.musicclub.auth.ProfileResponse\x12\\\n" +
+	"\x12TelegramWebAppAuth\x12).musicclub.auth.TelegramWebAppAuthRequest\x1a\x1b.musicclub.auth.AuthSessionB\x1cZ\x1amusicclubbot/backend/protob\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -525,41 +573,44 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_auth_proto_goTypes = []any{
-	(*Credentials)(nil),         // 0: musicclub.auth.Credentials
-	(*RegisterUserRequest)(nil), // 1: musicclub.auth.RegisterUserRequest
-	(*RefreshRequest)(nil),      // 2: musicclub.auth.RefreshRequest
-	(*TokenPair)(nil),           // 3: musicclub.auth.TokenPair
-	(*TgLoginLinkResponse)(nil), // 4: musicclub.auth.TgLoginLinkResponse
-	(*TgLoginRequest)(nil),      // 5: musicclub.auth.TgLoginRequest
-	(*AuthSession)(nil),         // 6: musicclub.auth.AuthSession
-	(*ProfileResponse)(nil),     // 7: musicclub.auth.ProfileResponse
-	(*User)(nil),                // 8: musicclub.user.User
-	(*PermissionSet)(nil),       // 9: musicclub.permissions.PermissionSet
-	(*emptypb.Empty)(nil),       // 10: google.protobuf.Empty
+	(*Credentials)(nil),               // 0: musicclub.auth.Credentials
+	(*RegisterUserRequest)(nil),       // 1: musicclub.auth.RegisterUserRequest
+	(*RefreshRequest)(nil),            // 2: musicclub.auth.RefreshRequest
+	(*TokenPair)(nil),                 // 3: musicclub.auth.TokenPair
+	(*TgLoginLinkResponse)(nil),       // 4: musicclub.auth.TgLoginLinkResponse
+	(*TgLoginRequest)(nil),            // 5: musicclub.auth.TgLoginRequest
+	(*AuthSession)(nil),               // 6: musicclub.auth.AuthSession
+	(*ProfileResponse)(nil),           // 7: musicclub.auth.ProfileResponse
+	(*TelegramWebAppAuthRequest)(nil), // 8: musicclub.auth.TelegramWebAppAuthRequest
+	(*User)(nil),                      // 9: musicclub.user.User
+	(*PermissionSet)(nil),             // 10: musicclub.permissions.PermissionSet
+	(*emptypb.Empty)(nil),             // 11: google.protobuf.Empty
 }
 var file_auth_proto_depIdxs = []int32{
 	0,  // 0: musicclub.auth.RegisterUserRequest.credentials:type_name -> musicclub.auth.Credentials
-	8,  // 1: musicclub.auth.RegisterUserRequest.profile:type_name -> musicclub.user.User
-	8,  // 2: musicclub.auth.TgLoginRequest.user:type_name -> musicclub.user.User
+	9,  // 1: musicclub.auth.RegisterUserRequest.profile:type_name -> musicclub.user.User
+	9,  // 2: musicclub.auth.TgLoginRequest.user:type_name -> musicclub.user.User
 	3,  // 3: musicclub.auth.AuthSession.tokens:type_name -> musicclub.auth.TokenPair
-	8,  // 4: musicclub.auth.AuthSession.profile:type_name -> musicclub.user.User
-	9,  // 5: musicclub.auth.AuthSession.permissions:type_name -> musicclub.permissions.PermissionSet
-	8,  // 6: musicclub.auth.ProfileResponse.profile:type_name -> musicclub.user.User
-	9,  // 7: musicclub.auth.ProfileResponse.permissions:type_name -> musicclub.permissions.PermissionSet
+	9,  // 4: musicclub.auth.AuthSession.profile:type_name -> musicclub.user.User
+	10, // 5: musicclub.auth.AuthSession.permissions:type_name -> musicclub.permissions.PermissionSet
+	9,  // 6: musicclub.auth.ProfileResponse.profile:type_name -> musicclub.user.User
+	10, // 7: musicclub.auth.ProfileResponse.permissions:type_name -> musicclub.permissions.PermissionSet
 	1,  // 8: musicclub.auth.AuthService.Register:input_type -> musicclub.auth.RegisterUserRequest
 	0,  // 9: musicclub.auth.AuthService.Login:input_type -> musicclub.auth.Credentials
 	2,  // 10: musicclub.auth.AuthService.Refresh:input_type -> musicclub.auth.RefreshRequest
-	8,  // 11: musicclub.auth.AuthService.GetTgLoginLink:input_type -> musicclub.user.User
-	10, // 12: musicclub.auth.AuthService.GetProfile:input_type -> google.protobuf.Empty
-	6,  // 13: musicclub.auth.AuthService.Register:output_type -> musicclub.auth.AuthSession
-	6,  // 14: musicclub.auth.AuthService.Login:output_type -> musicclub.auth.AuthSession
-	3,  // 15: musicclub.auth.AuthService.Refresh:output_type -> musicclub.auth.TokenPair
-	4,  // 16: musicclub.auth.AuthService.GetTgLoginLink:output_type -> musicclub.auth.TgLoginLinkResponse
-	7,  // 17: musicclub.auth.AuthService.GetProfile:output_type -> musicclub.auth.ProfileResponse
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
+	9,  // 11: musicclub.auth.AuthService.GetTgLoginLink:input_type -> musicclub.user.User
+	11, // 12: musicclub.auth.AuthService.GetProfile:input_type -> google.protobuf.Empty
+	8,  // 13: musicclub.auth.AuthService.TelegramWebAppAuth:input_type -> musicclub.auth.TelegramWebAppAuthRequest
+	6,  // 14: musicclub.auth.AuthService.Register:output_type -> musicclub.auth.AuthSession
+	6,  // 15: musicclub.auth.AuthService.Login:output_type -> musicclub.auth.AuthSession
+	3,  // 16: musicclub.auth.AuthService.Refresh:output_type -> musicclub.auth.TokenPair
+	4,  // 17: musicclub.auth.AuthService.GetTgLoginLink:output_type -> musicclub.auth.TgLoginLinkResponse
+	7,  // 18: musicclub.auth.AuthService.GetProfile:output_type -> musicclub.auth.ProfileResponse
+	6,  // 19: musicclub.auth.AuthService.TelegramWebAppAuth:output_type -> musicclub.auth.AuthSession
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -578,7 +629,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
