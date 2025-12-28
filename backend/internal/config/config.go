@@ -6,12 +6,13 @@ import (
 
 // Config groups runtime configuration for the backend service.
 type Config struct {
-	GRPCPort     string
-	DbUrl        string
-	JwtSecretKey []byte
-	BotUsername  string
-	BotToken     string
-	ChatID       string
+	GRPCPort                 string
+	DbUrl                    string
+	JwtSecretKey             []byte
+	BotUsername              string
+	BotToken                 string
+	ChatID                   string
+	SkipChatMembershipCheck  bool
 }
 
 // Load reads configuration from environment with sane defaults.
@@ -22,14 +23,16 @@ func Load() Config {
 	botUsername := getenv("BOT_USERNAME", "YourBotUsername")
 	botToken := getenv("BOT_TOKEN", "")
 	chatID := getenv("CHAT_ID", "")
-
+	skipCheck := getenv("SKIP_CHAT_MEMBERSHIP_CHECK", "false") == "true"
+	
 	return Config{
-		GRPCPort:     port,
-		DbUrl:        url,
-		JwtSecretKey: jwtSecret,
-		BotUsername:  botUsername,
-		BotToken:     botToken,
-		ChatID:       chatID,
+		GRPCPort:                port,
+		DbUrl:                   url,
+		JwtSecretKey:            jwtSecret,
+		BotUsername:             botUsername,
+		BotToken:                botToken,
+		ChatID:                  chatID,
+		SkipChatMembershipCheck: skipCheck,
 	}
 }
 

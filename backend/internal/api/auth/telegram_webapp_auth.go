@@ -54,19 +54,26 @@ func (s *AuthService) TelegramWebAppAuth(ctx context.Context, req *proto.Telegra
 	}
 
 	// 2. Check chat membership
-	isMember, err := checkChatMembership(user.ID, cfg.BotToken, cfg.ChatID)
-	if err != nil {
-		log.Printf("[ERROR] Failed to check chat membership for user %d: %v", user.ID, err)
-		return nil, status.Error(codes.Internal, "failed to check chat membership")
-	}
+	isMember := true // Default to true if check is skipped
+	if cfg.SkipChatMembershipCheck {
+		log.Printf("[INFO] Chat membership check skipped for user %d (@%s) due to SKIP_CHAT_MEMBERSHIP_CHECK=true",
+			user.ID, user.Username)
+	} else {
+		var err error
+		isMember, err = checkChatMembership(user.ID, cfg.BotToken, cfg.ChatID)
+		if err != nil {
+			log.Printf("[ERROR] Failed to check chat membership for user %d: %v", user.ID, err)
+			return nil, status.Error(codes.Internal, "failed to check chat membership")
+		}
 
-	log.Printf("[DEBUG] Chat membership check for user %d (@%s): isMember=%v, chatID=%s",
-		user.ID, user.Username, isMember, cfg.ChatID)
+		log.Printf("[DEBUG] Chat membership check for user %d (@%s): isMember=%v, chatID=%s",
+			user.ID, user.Username, isMember, cfg.ChatID)
 
-	if !isMember {
-		log.Printf("[WARN] User %d (@%s) attempted to access but is not a member of chat %s",
-			user.ID, user.Username, cfg.ChatID)
-		return nil, status.Error(codes.PermissionDenied, "you must be a member of the Music Club chat to use this app")
+		if !isMember {
+			log.Printf("[WARN] User %d (@%s) attempted to access but is not a member of chat %s",
+				user.ID, user.Username, cfg.ChatID)
+			return nil, status.Error(codes.PermissionDenied, "you must be a member of the Music Club chat to use this app")
+		}
 	}
 
 	// 3. Get or create user in database

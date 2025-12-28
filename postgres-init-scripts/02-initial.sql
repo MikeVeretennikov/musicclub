@@ -12,7 +12,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS app_user (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     tg_user_id BIGINT UNIQUE DEFAULT NULL,
     is_chat_member BOOLEAN NOT NULL DEFAULT FALSE,
     display_name TEXT NOT NULL,
