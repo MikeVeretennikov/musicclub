@@ -357,3 +357,13 @@ __marimo__/
 
 # Ignore common VS Code files
 .vscode/
+
+# SSL certificates and private keys
+certbot/conf/
+certbot/www/
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+selectel_*
